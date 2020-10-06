@@ -43,6 +43,12 @@
  */
 package com.itextpdf.io.font.otf;
 
+/**
+ * Common class for contextual substitution tables
+ * @deprecated To be removed in 7.2. Use {@link ContextualTable} with {@link ContextualSubstRule}
+ * parametrization instead.
+ */
+@Deprecated
 public abstract class ContextualSubTable extends ContextualTable<ContextualSubstRule> {
 
     private static final long serialVersionUID = 1802216575331243298L;
