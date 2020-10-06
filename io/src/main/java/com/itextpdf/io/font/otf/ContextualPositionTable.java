@@ -22,6 +22,12 @@
  */
 package com.itextpdf.io.font.otf;
 
+/**
+ * Common class for contextual positioning tables
+ * @deprecated To be removed in 7.2. Use {@link ContextualTable} with {@link ContextualPositionRule}
+ * parametrization instead.
+ */
+@Deprecated
 public abstract class ContextualPositionTable extends ContextualTable<ContextualPositionRule> {
     private static final long serialVersionUID = -5767338869523894047L;
 
