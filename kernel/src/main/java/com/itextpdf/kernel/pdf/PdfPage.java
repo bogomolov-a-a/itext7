@@ -677,7 +677,7 @@ public class PdfPage extends PdfObjectWrapper<PdfDictionary> {
      */
     public PdfPage setArtBox(Rectangle rectangle) {
         if (getPdfObject().getAsRectangle(PdfName.TrimBox) != null) {
-            getPdfObject().remove(PdfName.TrimBox);
+            remove(PdfName.TrimBox);
             Logger logger = LoggerFactory.getLogger(PdfPage.class);
             logger.warn(LogMessageConstant.ONLY_ONE_OF_ARTBOX_OR_TRIMBOX_CAN_EXIST_IN_THE_PAGE);
         }
@@ -705,7 +705,7 @@ public class PdfPage extends PdfObjectWrapper<PdfDictionary> {
      */
     public PdfPage setTrimBox(Rectangle rectangle) {
         if (getPdfObject().getAsRectangle(PdfName.ArtBox) != null) {
-            getPdfObject().remove(PdfName.ArtBox);
+            remove(PdfName.ArtBox);
             Logger logger = LoggerFactory.getLogger(PdfPage.class);
             logger.warn(LogMessageConstant.ONLY_ONE_OF_ARTBOX_OR_TRIMBOX_CAN_EXIST_IN_THE_PAGE);
         }
@@ -909,8 +909,12 @@ public class PdfPage extends PdfObjectWrapper<PdfDictionary> {
 
     /**
      * Removes an annotation from the page.
-     * <br><br>
-     * NOTE: If document is tagged, PdfDocument's PdfTagStructure instance will point at annotation tag parent after method call.
+     *
+     * <p>
+     * If document is tagged corresponding annotation logical structure content item will be removed
+     * as well as its immediate structure element parent given following conditions are met:
+     * annotation content item was its single child and structure element role is either Annot
+     * or Form.
      *
      * @param annotation an annotation to be removed.
      * @return this {@link PdfPage} instance.
@@ -921,10 +925,11 @@ public class PdfPage extends PdfObjectWrapper<PdfDictionary> {
             annots.remove(annotation.getPdfObject());
 
             if (annots.isEmpty()) {
-                getPdfObject().remove(PdfName.Annots);
-                setModified();
+                remove(PdfName.Annots);
             } else if (annots.getIndirectReference() == null) {
                 setModified();
+            } else {
+                annots.setModified();
             }
         }
 
@@ -933,7 +938,7 @@ public class PdfPage extends PdfObjectWrapper<PdfDictionary> {
             if (tagPointer != null) {
                 boolean standardAnnotTagRole = StandardRoles.ANNOT.equals(tagPointer.getRole())
                         || StandardRoles.FORM.equals(tagPointer.getRole());
-                if (tagPointer.getKidsRoles().size() == 0 && standardAnnotTagRole) {
+                if (tagPointer.getKidsRoles().isEmpty() && standardAnnotTagRole) {
                     tagPointer.removeTag();
                 }
             }
@@ -1114,8 +1119,8 @@ public class PdfPage extends PdfObjectWrapper<PdfDictionary> {
     }
 
     /**
-     * Helper method that associate specified value with specified key in the underlined {@link PdfDictionary}.
-     * May be used in chain.
+     * Helper method that associates specified value with specified key in the underlying {@link PdfDictionary}.
+     * Can be used in method chaining.
      *
      * @param key   the {@link PdfName} key with which the specified value is to be associated.
      * @param value the {@link PdfObject} value to be associated with the specified key.
@@ -1123,6 +1128,19 @@ public class PdfPage extends PdfObjectWrapper<PdfDictionary> {
      */
     public PdfPage put(PdfName key, PdfObject value) {
         getPdfObject().put(key, value);
+        setModified();
+        return this;
+    }
+
+    /**
+     * Helper method that removes the value associated with specified key from the underlying {@link PdfDictionary}.
+     * Can be used in method chaining.
+     *
+     * @param key the {@link PdfName} key for which associated value is to be removed.
+     * @return this {@link PdfPage} object.
+     */
+    public PdfPage remove(PdfName key) {
+        getPdfObject().remove(key);
         setModified();
         return this;
     }
