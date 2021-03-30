@@ -676,11 +676,6 @@ public class PdfPage extends PdfObjectWrapper<PdfDictionary> {
      * @return this {@link PdfPage} instance.
      */
     public PdfPage setArtBox(Rectangle rectangle) {
-        if (getPdfObject().getAsRectangle(PdfName.TrimBox) != null) {
-            remove(PdfName.TrimBox);
-            Logger logger = LoggerFactory.getLogger(PdfPage.class);
-            logger.warn(LogMessageConstant.ONLY_ONE_OF_ARTBOX_OR_TRIMBOX_CAN_EXIST_IN_THE_PAGE);
-        }
         put(PdfName.ArtBox, new PdfArray(rectangle));
         return this;
     }
@@ -704,11 +699,6 @@ public class PdfPage extends PdfObjectWrapper<PdfDictionary> {
      * @return this {@link PdfPage} instance.
      */
     public PdfPage setTrimBox(Rectangle rectangle) {
-        if (getPdfObject().getAsRectangle(PdfName.ArtBox) != null) {
-            remove(PdfName.ArtBox);
-            Logger logger = LoggerFactory.getLogger(PdfPage.class);
-            logger.warn(LogMessageConstant.ONLY_ONE_OF_ARTBOX_OR_TRIMBOX_CAN_EXIST_IN_THE_PAGE);
-        }
         put(PdfName.TrimBox, new PdfArray(rectangle));
         return this;
     }
@@ -911,7 +901,7 @@ public class PdfPage extends PdfObjectWrapper<PdfDictionary> {
      * Removes an annotation from the page.
      *
      * <p>
-     * If document is tagged corresponding annotation logical structure content item will be removed
+     * In case document is tagged a corresponding annotation logical structure content item will be removed
      * as well as its immediate structure element parent given following conditions are met:
      * annotation content item was its single child and structure element role is either Annot
      * or Form.
@@ -1136,8 +1126,9 @@ public class PdfPage extends PdfObjectWrapper<PdfDictionary> {
      * Helper method that removes the value associated with specified key from the underlying {@link PdfDictionary}.
      * Can be used in method chaining.
      *
-     * @param key the {@link PdfName} key for which associated value is to be removed.
-     * @return this {@link PdfPage} object.
+     * @param key the {@link PdfName} key for which associated value is to be removed
+     *
+     * @return this {@link PdfPage} object
      */
     public PdfPage remove(PdfName key) {
         getPdfObject().remove(key);
