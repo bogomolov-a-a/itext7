@@ -38,5 +38,24 @@
         </includes>
       </testResource>
     </testResources>
+    <plugins>
+      <plugin>
+        <groupId>com.github.siom79.japicmp</groupId>
+        <artifactId>japicmp-maven-plugin</artifactId>
+        <configuration>
+          <parameter>
+            <onlyModified>true</onlyModified>
+            <onlyBinaryIncompatible>true</onlyBinaryIncompatible>
+            <ignoreMissingClasses>true</ignoreMissingClasses>
+            <excludes>
+              <exclude>
+                <!--TODO DEVSIX-5266 remove whitelisted breaking changes after release-->
+                com.itextpdf.io.font.otf.lookuptype6.SubTableLookup6
+              </exclude>
+            </excludes>
+          </parameter>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 </project>
