@@ -467,6 +467,13 @@ public class PdfSigner {
     }
 
     /**
+     * Returns der encoded authenticated attribute bytes for signing on client side.
+     */
+    public byte[] getDerEncodedAuthenticatedAttributeBytes(){
+        return derEncodedAuthenticatedAttributeBytes;
+    }
+
+    /**
      * Signs the document using the detached mode, CMS or CAdES equivalent.
      * <br><br>
      * NOTE: This method closes the underlying pdf document. This means, that current instance
@@ -613,13 +620,15 @@ public class PdfSigner {
         }
         byte[] sh = sgn.getAuthenticatedAttributeBytes(hash, sigtype, ocspList, crlBytes);
         byte[] extSignature = externalSignature.sign(sh);
-        sgn.setExternalSignatureValue(
-                extSignature,
-                null,
-                externalSignature.getSignatureAlgorithmName(),
-                externalSignature.getSignatureMechanismParameters()
-        );
-
+        sgn.setExternalDigest(extSignature, null, externalSignature.getEncryptionAlgorithm());
+        /*
+        * Copy der encoded authenticated attribute bytes for sending on client side for
+        * signing client private key in browser by 'CryptoPro CAdES Browser Plugin'(or other client cryptography module).
+        * */
+        if (derEncodedAuthenticatedAttributeBytes == null) {
+          derEncodedAuthenticatedAttributeBytes = new byte[sh.length];
+          System.arraycopy(sh, 0, derEncodedAuthenticatedAttributeBytes, 0, sh.length);
+        }
         byte[] encodedSig = sgn.getEncodedPKCS7(hash, sigtype, tsaClient, ocspList, crlBytes);
 
         if (estimatedSize < encodedSig.length) {
