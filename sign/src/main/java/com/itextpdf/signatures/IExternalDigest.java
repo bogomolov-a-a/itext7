@@ -30,12 +30,20 @@ import java.security.MessageDigest;
  */
 public interface IExternalDigest {
 
-    /**
-     * Returns the MessageDigest associated with the provided hashing algorithm.
-     *
-     * @param hashAlgorithm                 String value representing the hashing algorithm
-     * @return MessageDigest                MessageDigest object
-     * @throws GeneralSecurityException     Thrown when something goes wrong in calculating the digest
-     */
-    MessageDigest getMessageDigest(String hashAlgorithm) throws GeneralSecurityException;
+  /**
+   * Returns the MessageDigest associated with the provided hashing algorithm.
+   *
+   * @param hashAlgorithm String value representing the hashing algorithm
+   * @return MessageDigest                MessageDigest object
+   * @throws GeneralSecurityException Thrown when something goes wrong in calculating the digest
+   */
+  MessageDigest getMessageDigest(String hashAlgorithm) throws GeneralSecurityException;
+
+  /**
+   * Returns the MessageDigest Asn1 OID. CAN NOT BE NULL!
+   *
+   * @param hashAlgorithm String value representing the hashing algorithm
+   * @return MessageDigest Asn1 OID
+   */
+  String getMessageDigestOid(String hashAlgorithm) throws GeneralSecurityException;
 }

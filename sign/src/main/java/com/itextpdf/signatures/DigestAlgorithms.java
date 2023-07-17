@@ -138,8 +138,7 @@ public class DigestAlgorithms {
         digestNames.put("1.3.36.3.3.1.3", "RIPEMD128");
         digestNames.put("1.3.36.3.3.1.2", "RIPEMD160");
         digestNames.put("1.3.36.3.3.1.4", "RIPEMD256");
-        digestNames.put("1.2.643.2.2.9", "GOST3411");
-        digestNames.put("2.16.840.1.101.3.4.2.7", "SHA3-224");
+       digestNames.put("2.16.840.1.101.3.4.2.7", "SHA3-224");
         digestNames.put("2.16.840.1.101.3.4.2.8", "SHA3-256");
         digestNames.put("2.16.840.1.101.3.4.2.9", "SHA3-384");
         digestNames.put("2.16.840.1.101.3.4.2.10", "SHA3-512");
@@ -169,7 +168,6 @@ public class DigestAlgorithms {
         allowedDigests.put("RIPEMD-160", "1.3.36.3.2.1");
         allowedDigests.put("RIPEMD256", "1.3.36.3.2.3");
         allowedDigests.put("RIPEMD-256", "1.3.36.3.2.3");
-        allowedDigests.put("GOST3411", "1.2.643.2.2.9");
         allowedDigests.put("SHA3-224", "2.16.840.1.101.3.4.2.7");
         allowedDigests.put("SHA3-256", "2.16.840.1.101.3.4.2.8");
         allowedDigests.put("SHA3-384", "2.16.840.1.101.3.4.2.9");

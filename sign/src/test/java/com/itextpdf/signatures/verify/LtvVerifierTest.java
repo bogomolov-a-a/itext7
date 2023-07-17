@@ -28,6 +28,7 @@ import com.itextpdf.commons.bouncycastle.operator.AbstractOperatorCreationExcept
 import com.itextpdf.commons.bouncycastle.pkcs.AbstractPKCSException;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
+import com.itextpdf.signatures.IExternalDigest;
 import com.itextpdf.signatures.LtvVerification;
 import com.itextpdf.signatures.LtvVerifier;
 import com.itextpdf.signatures.VerificationOK;
@@ -73,10 +74,10 @@ public class LtvVerifierTest extends ExtendedITextTest {
             throws IOException, GeneralSecurityException, AbstractPKCSException, AbstractOperatorCreationException {
         String ltvTsFileName = sourceFolder + "ltvDoc.pdf";
 
-        LtvVerifier verifier = new LtvVerifier(new PdfDocument(new PdfReader(ltvTsFileName)));
+        LtvVerifier verifier = new LtvVerifier(new PdfDocument(new PdfReader(ltvTsFileName)), null,null);
         verifier.setCertificateOption(LtvVerification.CertificateOption.WHOLE_CHAIN);
         verifier.setRootStore(PemFileHelper.initStore(certsSrc + "rootStore.pem", password, PROVIDER));
-        List<VerificationOK> verificationMessages = verifier.verify(null);
+        List<VerificationOK> verificationMessages = verifier.verify(null, (IExternalDigest) null,null);
 
         Assert.assertEquals(7, verificationMessages.size());
     }
@@ -88,10 +89,10 @@ public class LtvVerifierTest extends ExtendedITextTest {
         Security.addProvider(FACTORY.getProvider());
 
         LtvVerifier verifier =
-                new LtvVerifier(new PdfDocument(new PdfReader(ltvTsFileName)), FACTORY.getProviderName());
+                new LtvVerifier(new PdfDocument(new PdfReader(ltvTsFileName)), FACTORY.getProviderName(),null,null);
         verifier.setCertificateOption(LtvVerification.CertificateOption.WHOLE_CHAIN);
         verifier.setRootStore(PemFileHelper.initStore(certsSrc + "rootStore.pem", password, PROVIDER));
-        List<VerificationOK> verificationMessages = verifier.verify(null);
+        List<VerificationOK> verificationMessages = verifier.verify(null, (IExternalDigest) null,null);
 
         Assert.assertEquals(7, verificationMessages.size());
     }

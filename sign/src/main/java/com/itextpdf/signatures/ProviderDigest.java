@@ -47,4 +47,9 @@ public class ProviderDigest implements IExternalDigest {
     public MessageDigest getMessageDigest(String hashAlgorithm) throws GeneralSecurityException{
         return DigestAlgorithms.getMessageDigest(hashAlgorithm, provider);
     }
+
+    @Override
+    public String getMessageDigestOid(String hashAlgorithm) throws GeneralSecurityException {
+        return hashAlgorithm;
+    }
 }

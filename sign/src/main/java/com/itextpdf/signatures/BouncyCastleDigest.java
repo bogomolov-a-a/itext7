@@ -84,11 +84,18 @@ public class BouncyCastleDigest implements IExternalDigest {
             // RIPEMD256
             case "1.3.36.3.2.3":
                 return MessageDigest.getInstance("RIPEMD256", provider);
-            // GOST3411
-            case "1.2.643.2.2.9":
-                return MessageDigest.getInstance("GOST3411", provider);
             default:
                 throw new NoSuchAlgorithmException(hashAlgorithm);
         }
+    }
+
+    @Override
+    public String getMessageDigestOid(String hashAlgorithm) throws GeneralSecurityException {
+        String oid = DigestAlgorithms.getAllowedDigest(hashAlgorithm);
+
+        if (oid == null) {
+            throw new NoSuchAlgorithmException(hashAlgorithm);
+        }
+        return oid;
     }
 }

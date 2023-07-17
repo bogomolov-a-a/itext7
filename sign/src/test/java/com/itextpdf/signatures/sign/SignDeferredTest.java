@@ -26,7 +26,6 @@ import com.itextpdf.bouncycastleconnector.BouncyCastleFactoryCreator;
 import com.itextpdf.commons.bouncycastle.IBouncyCastleFactory;
 import com.itextpdf.commons.bouncycastle.operator.AbstractOperatorCreationException;
 import com.itextpdf.commons.bouncycastle.pkcs.AbstractPKCSException;
-import com.itextpdf.forms.PdfAcroForm;
 import com.itextpdf.forms.fields.PdfFormCreator;
 import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfArray;
@@ -277,7 +276,7 @@ public class SignDeferredTest extends ExtendedITextTest {
 
         byte[] signatureContent = null;
         try {
-            PdfPKCS7 pkcs7 = new PdfPKCS7(null, chain, HASH_ALGORITHM, null, new BouncyCastleDigest(), false);
+            PdfPKCS7 pkcs7 = new PdfPKCS7(null, chain, HASH_ALGORITHM, null, new BouncyCastleDigest(), false, null);
 
             byte[] attributes = pkcs7.getAuthenticatedAttributeBytes(docBytesHash, PdfSigner.CryptoStandard.CMS, null, null);
 

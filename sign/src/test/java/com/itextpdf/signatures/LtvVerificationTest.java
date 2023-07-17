@@ -58,7 +58,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -119,7 +118,7 @@ public class LtvVerificationTest extends ExtendedITextTest {
             PrivateKey caPrivateKey = PemFileHelper.readFirstKey(rootCertPath, PASSWORD);
 
             verification.addVerification("TestSignature", null, new TestCrlClient().addBuilderForCertIssuer(caCert, caPrivateKey),
-                    CertificateOption.SIGNING_CERTIFICATE, Level.CRL, CertificateInclusion.NO);
+                    CertificateOption.SIGNING_CERTIFICATE, Level.CRL, CertificateInclusion.NO, null,null);
 
             verification.merge();
         }
@@ -176,7 +175,7 @@ public class LtvVerificationTest extends ExtendedITextTest {
             verificationWithWriter.merge();
             Exception exception2 = Assert.assertThrows(IllegalStateException.class,
                     () -> verificationWithWriter.addVerification(null, null, null,
-                            CertificateOption.SIGNING_CERTIFICATE, Level.CRL, CertificateInclusion.YES));
+                            CertificateOption.SIGNING_CERTIFICATE, Level.CRL, CertificateInclusion.YES, null,null));
             Assert.assertEquals(SignExceptionMessageConstant.VERIFICATION_ALREADY_OUTPUT, exception2.getMessage());
         }
     }
@@ -198,7 +197,7 @@ public class LtvVerificationTest extends ExtendedITextTest {
     public void exceptionWhenValidateParticularNonExistentSigNameTest() {
         Assert.assertThrows(NullPointerException.class,
                 () -> TEST_VERIFICATION.addVerification("nonExistentSigName", null, null,
-                        CertificateOption.SIGNING_CERTIFICATE, Level.OCSP_CRL, CertificateInclusion.YES));
+                        CertificateOption.SIGNING_CERTIFICATE, Level.OCSP_CRL, CertificateInclusion.YES, null,null));
     }
 
     @Test
@@ -578,6 +577,6 @@ public class LtvVerificationTest extends ExtendedITextTest {
             crl = new CrlClientOnline(crlUrl);
         }
         Assert.assertEquals(expectedResult,
-                TEST_VERIFICATION.addVerification(SIG_FIELD_NAME, ocsp, crl, certificateOption, level, inclusion));
+                TEST_VERIFICATION.addVerification(SIG_FIELD_NAME, ocsp, crl, certificateOption, level, inclusion, null,null));
     }
 }

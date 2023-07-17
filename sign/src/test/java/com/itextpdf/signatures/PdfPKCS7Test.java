@@ -69,7 +69,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
         String hashAlgorithm = "";
         Exception e = Assert.assertThrows(PdfException.class,
                 () -> new PdfPKCS7(null, chain, hashAlgorithm, null,
-                        new BouncyCastleDigest(), false));
+                        new BouncyCastleDigest(), false, null));
         Assert.assertEquals(
                 MessageFormatUtil.format(SignExceptionMessageConstant.UNKNOWN_HASH_ALGORITHM, hashAlgorithm),
                 e.getMessage());
@@ -80,7 +80,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
             throws NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {
         String hashAlgorithm = DigestAlgorithms.SHA256;
         PdfPKCS7 pkcs7 = new PdfPKCS7(null, chain, hashAlgorithm, null,
-                new BouncyCastleDigest(), false);
+                new BouncyCastleDigest(), false, null);
 
         String expectedOid = DigestAlgorithms.getAllowedDigest(hashAlgorithm);
         Assert.assertEquals(expectedOid, pkcs7.getDigestAlgorithmOid());
@@ -97,7 +97,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void simpleCreationWithPrivateKeyTest()
             throws NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {
         String hashAlgorithm = DigestAlgorithms.SHA256;
-        PdfPKCS7 pkcs7 = new PdfPKCS7(pk, chain, hashAlgorithm, null, new BouncyCastleDigest(), false);
+        PdfPKCS7 pkcs7 = new PdfPKCS7(pk, chain, hashAlgorithm, null, new BouncyCastleDigest(), false, null);
 
         String expectedOid = DigestAlgorithms.getAllowedDigest(hashAlgorithm);
         Assert.assertEquals(expectedOid, pkcs7.getDigestAlgorithmOid());
@@ -111,7 +111,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
         String hashAlgorithm = "GOST3411";
         // Throws different exceptions on .net and java, bc/bcfips
         Assert.assertThrows(Exception.class,
-                () -> new PdfPKCS7(pk, chain, hashAlgorithm, null, new BouncyCastleDigest(), false));
+                () -> new PdfPKCS7(pk, chain, hashAlgorithm, null, new BouncyCastleDigest(), false, null));
     }
 
     @Test
@@ -163,7 +163,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "ltvEnabledSingleSignatureTest01.pdf"));
         SignatureUtil sigUtil = new SignatureUtil(outDocument);
-        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1");
+        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1", null,null);
 
         Assert.assertNull(pkcs7.getCRLs());
         // it's tested here that ocsp and time stamp token were found while
@@ -189,7 +189,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void verifyTimestampImprintSimpleSignatureTest() throws IOException, GeneralSecurityException {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "simpleSignature.pdf"));
-        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("Signature1");
+        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("Signature1", null,null);
         Assert.assertFalse(pkcs7.verifyTimestampImprint());
     }
 
@@ -197,7 +197,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void verifyTimestampImprintTimeStampSignatureTest() throws IOException, GeneralSecurityException {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "timeStampSignature.pdf"));
-        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("timestampSig1");
+        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("timestampSig1", null,null);
         Assert.assertFalse(pkcs7.verifyTimestampImprint());
     }
 
@@ -205,7 +205,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void verifyTimestampImprintEmbeddedTimeStampSignatureTest() throws IOException, GeneralSecurityException {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "embeddedTimeStampSignature.pdf"));
-        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("Signature1");
+        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("Signature1", null,null);
         Assert.assertTrue(pkcs7.verifyTimestampImprint());
     }
 
@@ -213,7 +213,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void verifyTimestampImprintCorruptedTimeStampSignatureTest() throws IOException, GeneralSecurityException {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "embeddedTimeStampCorruptedSignature.pdf"));
-        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("Signature1");
+        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("Signature1", null,null);
         Assert.assertTrue(pkcs7.verifyTimestampImprint());
     }
 
@@ -222,7 +222,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "singleSignatureNotEmptyCRL.pdf"));
         SignatureUtil sigUtil = new SignatureUtil(outDocument);
-        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1");
+        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1", null,null);
         List<X509CRL> crls = pkcs7.getCRLs().stream().map(crl -> (X509CRL) crl).collect(Collectors.toList());
         Assert.assertEquals(2, crls.size());
         Assert.assertArrayEquals(crls.get(0).getEncoded(),
@@ -244,7 +244,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "signatureWithInvalidOcspTest.pdf"));
         SignatureUtil sigUtil = new SignatureUtil(outDocument);
-        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1");
+        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1", null,null);
         Assert.assertFalse(pkcs7.isRevocationValid());
     }
 
@@ -253,7 +253,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "signatureWithValidOcspTest.pdf"));
         SignatureUtil sigUtil = new SignatureUtil(outDocument);
-        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1");
+        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1", null,null);
         Assert.assertTrue(pkcs7.isRevocationValid());
     }
 
@@ -291,7 +291,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void getEncodedPkcs1Test()
             throws NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, IOException {
         String hashAlgorithm = DigestAlgorithms.SHA256;
-        PdfPKCS7 pkcs7 = new PdfPKCS7(pk, chain, hashAlgorithm, null, new BouncyCastleDigest(), true);
+        PdfPKCS7 pkcs7 = new PdfPKCS7(pk, chain, hashAlgorithm, null, new BouncyCastleDigest(), true, null);
         byte[] bytes = pkcs7.getEncodedPKCS1();
         byte[] cmpBytes = Files.readAllBytes(Paths.get(SOURCE_FOLDER + "cmpBytesPkcs1.txt"));
         IASN1OctetString outOctetString = BOUNCY_CASTLE_FACTORY.createASN1OctetString(bytes);
@@ -303,7 +303,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void getEncodedPkcs1NullPrivateKeyTest()
             throws NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {
         String hashAlgorithm = DigestAlgorithms.SHA256;
-        PdfPKCS7 pkcs7 = new PdfPKCS7(null, chain, hashAlgorithm, null, new BouncyCastleDigest(), true);
+        PdfPKCS7 pkcs7 = new PdfPKCS7(null, chain, hashAlgorithm, null, new BouncyCastleDigest(), true, null);
         Exception exception = Assert.assertThrows(PdfException.class, () -> pkcs7.getEncodedPKCS1());
         Assert.assertEquals(KernelExceptionMessageConstant.UNKNOWN_PDF_EXCEPTION, exception.getMessage());
     }
@@ -312,7 +312,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void getEncodedPkcs7UnknownExceptionTest()
             throws NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {
         String hashAlgorithm = DigestAlgorithms.SHA256;
-        PdfPKCS7 pkcs7 = new PdfPKCS7(pk, chain, hashAlgorithm, null, new BouncyCastleDigest(), true);
+        PdfPKCS7 pkcs7 = new PdfPKCS7(pk, chain, hashAlgorithm, null, new BouncyCastleDigest(), true, null);
         TestTsaClient testTsa = new TestTsaClient(Arrays.asList(chain), pk);
         Exception exception = Assert.assertThrows(PdfException.class,
                 () -> pkcs7.getEncodedPKCS7(null, CryptoStandard.CMS, testTsa, null, null));
@@ -323,7 +323,7 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void getEncodedPkcs7Test()
             throws NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, IOException {
         String hashAlgorithm = DigestAlgorithms.SHA256;
-        PdfPKCS7 pkcs7 = new PdfPKCS7(pk, chain, hashAlgorithm, null, new BouncyCastleDigest(), true);
+        PdfPKCS7 pkcs7 = new PdfPKCS7(pk, chain, hashAlgorithm, null, new BouncyCastleDigest(), true, null);
         byte[] bytes = pkcs7.getEncodedPKCS7();
         byte[] cmpBytes = Files.readAllBytes(Paths.get(SOURCE_FOLDER + "cmpBytesPkcs7.txt"));
         IASN1Primitive outStream = BOUNCY_CASTLE_FACTORY.createASN1Primitive(bytes);
@@ -357,6 +357,6 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     private static PdfPKCS7 createSimplePdfPKCS7()
             throws NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException {
         return new PdfPKCS7(null, chain, DigestAlgorithms.SHA256, null,
-                new BouncyCastleDigest(), false);
+                new BouncyCastleDigest(), false, null);
     }
 }

@@ -55,7 +55,6 @@ public class SignatureMechanisms {
         algorithmNames.put("1.3.36.3.3.1.2", "RSA");
         algorithmNames.put("1.3.36.3.3.1.3", "RSA");
         algorithmNames.put("1.3.36.3.3.1.4", "RSA");
-        algorithmNames.put("1.2.643.2.2.19", "ECGOST3410");
 
         // Elliptic curve public key cryptography
         algorithmNames.put("1.2.840.10045.2.1", "ECDSA");

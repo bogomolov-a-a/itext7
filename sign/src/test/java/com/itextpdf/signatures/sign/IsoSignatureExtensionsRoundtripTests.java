@@ -306,7 +306,7 @@ public class IsoSignatureExtensionsRoundtripTests extends ITextTest {
             throws IOException, GeneralSecurityException {
         try (PdfReader r = new PdfReader(fileName); PdfDocument pdfDoc = new PdfDocument(r)) {
             SignatureUtil u = new SignatureUtil(pdfDoc);
-            PdfPKCS7 data = u.readSignatureData(SIGNATURE_FIELD, BOUNCY_CASTLE_FACTORY.getProviderName());
+            PdfPKCS7 data = u.readSignatureData(SIGNATURE_FIELD, BOUNCY_CASTLE_FACTORY.getProviderName(), null,null);
             Assert.assertTrue(data.verifySignatureIntegrityAndAuthenticity());
             if (expectedSigAlgoIdentifier != null) {
                 ASN1ObjectIdentifier oid = new ASN1ObjectIdentifier(data.getSignatureMechanismOid());

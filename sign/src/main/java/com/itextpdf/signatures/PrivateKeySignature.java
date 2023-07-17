@@ -173,6 +173,11 @@ public class PrivateKeySignature implements IExternalSignature {
         return sig.sign();
     }
 
+    @Override
+    public String getSignatureMechanismOid() {
+        return SignatureMechanisms.getSignatureMechanismOid(signatureAlgorithm,hashAlgorithm);
+    }
+
     private String getSignatureMechanismName() {
         final String signatureAlgo = this.getSignatureAlgorithmName();
         // Ed25519 and Ed448 do not involve a choice of hashing algorithm

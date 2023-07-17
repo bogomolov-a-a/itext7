@@ -243,7 +243,7 @@ public class PdfSignatureAppearanceTest extends ExtendedITextTest {
                 SOURCE_FOLDER + "signatureFieldNotMergedWithWidget.pdf"))) {
 
             SignatureUtil sigUtil = new SignatureUtil(outputDoc);
-            PdfPKCS7 signatureData = sigUtil.readSignatureData("Signature1");
+            PdfPKCS7 signatureData = sigUtil.readSignatureData("Signature1", null,null);
             Assert.assertTrue(signatureData.verifySignatureIntegrityAndAuthenticity());
         }
     }

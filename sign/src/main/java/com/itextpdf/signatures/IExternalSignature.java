@@ -58,10 +58,13 @@ public interface IExternalSignature {
     /**
      * Signs the given message using the encryption algorithm in combination
      * with the hash algorithm.
+     *
      * @param message The message you want to be hashed and signed.
-     * @return	A signed message digest.
      * @throws GeneralSecurityException when requested cryptographic algorithm or security provider
-     * is not available
+     *                                  is not available
+     * @return A signed message digest.
      */
     byte[] sign(byte[] message) throws GeneralSecurityException;
+
+    String getSignatureMechanismOid();
 }

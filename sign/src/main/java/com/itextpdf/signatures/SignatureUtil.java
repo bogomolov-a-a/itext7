@@ -26,32 +26,14 @@ import com.itextpdf.forms.PdfAcroForm;
 import com.itextpdf.forms.fields.PdfFormCreator;
 import com.itextpdf.forms.fields.PdfFormField;
 import com.itextpdf.io.font.PdfEncodings;
-import com.itextpdf.io.source.IRandomAccessSource;
-import com.itextpdf.io.source.PdfTokenizer;
-import com.itextpdf.io.source.RASInputStream;
-import com.itextpdf.io.source.RandomAccessFileOrArray;
-import com.itextpdf.io.source.RandomAccessSourceFactory;
-import com.itextpdf.io.source.WindowRandomAccessSource;
+import com.itextpdf.io.source.*;
 import com.itextpdf.kernel.exceptions.PdfException;
-import com.itextpdf.kernel.pdf.PdfArray;
-import com.itextpdf.kernel.pdf.PdfDate;
-import com.itextpdf.kernel.pdf.PdfDictionary;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfName;
-import com.itextpdf.kernel.pdf.PdfNull;
-import com.itextpdf.kernel.pdf.PdfObject;
-import com.itextpdf.kernel.pdf.PdfReader;
-import com.itextpdf.kernel.pdf.PdfString;
+import com.itextpdf.kernel.pdf.*;
 import com.itextpdf.signatures.exceptions.SignExceptionMessageConstant;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Utility class that provides several convenience methods concerning digital signatures.
@@ -91,11 +73,13 @@ public class SignatureUtil {
      * use {@link #signatureCoversWholeDocument(String)} method.
      *
      * @param signatureFieldName the signature field name
+     * @param externalDigest
+     * @param externalSignature
      * @return a {@link PdfPKCS7} instance which can be used to fetch additional info about the signature
      * and also to perform integrity check of data signed by the given signature field.
      */
-    public PdfPKCS7 readSignatureData(String signatureFieldName) {
-        return readSignatureData(signatureFieldName, null);
+    public PdfPKCS7 readSignatureData(String signatureFieldName, IExternalDigest externalDigest, IExternalSignature externalSignature) {
+        return readSignatureData(signatureFieldName, null, externalDigest, externalSignature);
     }
 
     /**
@@ -111,11 +95,13 @@ public class SignatureUtil {
      * revision please use {@link #signatureCoversWholeDocument(String)} method.
      *
      * @param signatureFieldName the signature field name
-     * @param securityProvider the security provider or null for the default provider
+     * @param securityProvider   the security provider or null for the default provider
+     * @param externalDigest
+     * @param externalSignature
      * @return a {@link PdfPKCS7} instance which can be used to fetch additional info about the signature
      * and also to perform integrity check of data signed by the given signature field.
      */
-    public PdfPKCS7 readSignatureData(String signatureFieldName, String securityProvider) {
+    public PdfPKCS7 readSignatureData(String signatureFieldName, String securityProvider, IExternalDigest externalDigest, IExternalSignature externalSignature) {
         PdfSignature signature = getSignature(signatureFieldName);
         if (signature == null) {
             return null;
@@ -130,9 +116,9 @@ public class SignatureUtil {
                     cert = signature.getPdfObject().getAsArray(PdfName.Cert).getAsString(0);
                 }
                 pk = new PdfPKCS7(PdfEncodings.convertToBytes(contents.getValue(), null), cert.getValueBytes(),
-                        securityProvider);
+                        securityProvider, externalDigest, externalSignature);
             } else {
-                pk = new PdfPKCS7(PdfEncodings.convertToBytes(contents.getValue(), null), sub, securityProvider);
+                pk = new PdfPKCS7(PdfEncodings.convertToBytes(contents.getValue(), null), sub, securityProvider, externalDigest, externalSignature);
             }
             updateByteRange(pk, signature);
             PdfString date = signature.getDate();

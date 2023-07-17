@@ -24,20 +24,7 @@ package com.itextpdf.signatures;
 
 import com.itextpdf.bouncycastleconnector.BouncyCastleFactoryCreator;
 import com.itextpdf.commons.bouncycastle.IBouncyCastleFactory;
-import com.itextpdf.commons.bouncycastle.asn1.IASN1Encodable;
-import com.itextpdf.commons.bouncycastle.asn1.IASN1EncodableVector;
-import com.itextpdf.commons.bouncycastle.asn1.IASN1Enumerated;
-import com.itextpdf.commons.bouncycastle.asn1.IASN1InputStream;
-import com.itextpdf.commons.bouncycastle.asn1.IASN1ObjectIdentifier;
-import com.itextpdf.commons.bouncycastle.asn1.IASN1OctetString;
-import com.itextpdf.commons.bouncycastle.asn1.IASN1OutputStream;
-import com.itextpdf.commons.bouncycastle.asn1.IASN1Primitive;
-import com.itextpdf.commons.bouncycastle.asn1.IASN1Sequence;
-import com.itextpdf.commons.bouncycastle.asn1.IASN1Set;
-import com.itextpdf.commons.bouncycastle.asn1.IASN1TaggedObject;
-import com.itextpdf.commons.bouncycastle.asn1.IDEROctetString;
-import com.itextpdf.commons.bouncycastle.asn1.IDERSequence;
-import com.itextpdf.commons.bouncycastle.asn1.IDERSet;
+import com.itextpdf.commons.bouncycastle.asn1.*;
 import com.itextpdf.commons.bouncycastle.asn1.cms.IAttribute;
 import com.itextpdf.commons.bouncycastle.asn1.cms.IAttributeTable;
 import com.itextpdf.commons.bouncycastle.asn1.cms.IContentInfo;
@@ -60,33 +47,17 @@ import com.itextpdf.kernel.exceptions.PdfException;
 import com.itextpdf.kernel.pdf.PdfName;
 import com.itextpdf.signatures.exceptions.SignExceptionMessageConstant;
 
+import javax.security.auth.x500.X500Principal;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.SignatureException;
+import java.security.*;
 import java.security.cert.CRL;
 import java.security.cert.Certificate;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import javax.security.auth.x500.X500Principal;
+import java.util.*;
 
 /**
  * This class does all the processing related to signing
@@ -95,71 +66,167 @@ import javax.security.auth.x500.X500Principal;
 public class PdfPKCS7 {
 
     private static final IBouncyCastleFactory BOUNCY_CASTLE_FACTORY = BouncyCastleFactoryCreator.getFactory();
-
-    private ISignaturePolicyIdentifier signaturePolicyIdentifier;
-
-    // Encryption provider
-
     /**
      * The encryption provider, e.g. "BC" if you use BouncyCastle.
      */
-    private String provider;
+    private final String provider;
 
+    // Encryption provider
+    /**
+     * All the X.509 certificates in no particular order.
+     */
+    private final Collection<Certificate> certs;
+    /**
+     * All the X.509 certificates used for the main signature.
+     */
+    Collection<Certificate> signCerts;
+    /**
+     * BouncyCastle IBasicOCSPResponse
+     */
+    IBasicOCSPResponse basicResp;
     // Signature info
-
+    private ISignaturePolicyIdentifier signaturePolicyIdentifier;
     /**
      * Holds value of property signName.
      */
     private String signName;
-
     /**
      * Holds value of property reason.
      */
     private String reason;
 
+    // Constructors for creating new signatures
     /**
      * Holds value of property location.
      */
     private String location;
-
     /**
      * Holds value of property signDate.
      */
     private Calendar signDate = (Calendar) TimestampConstants.UNDEFINED_TIMESTAMP_DATE;
 
-    // Constructors for creating new signatures
+    // Constructors for validating existing signatures
+    /**
+     * Version of the PKCS#7 object
+     */
+    private int version = 1;
+    /**
+     * Version of the PKCS#7 "SignerInfo" object.
+     */
+    private int signerversion = 1;
+    /**
+     * The ID of the digest algorithm, e.g. "2.16.840.1.101.3.4.2.1".
+     */
+    private String digestAlgorithmOid;
+    /**
+     * The object that will create the digest
+     */
+    private MessageDigest messageDigest;
+    /**
+     * The digest algorithms
+     */
+    private Set<String> digestalgos;
+    /**
+     * The digest attributes
+     */
+    private byte[] digestAttr;
+    private PdfName filterSubtype;
+    /**
+     * The signature algorithm.
+     */
+    private String signatureMechanismOid;
+    private IASN1Encodable signatureMechanismParameters = null;
+    private final IExternalDigest interfaceDigest;
+    /**
+     * The signature value or signed digest, if created outside this class
+     */
+    private byte[] externalSignatureValue;
+    /**
+     * Externally specified encapsulated message content.
+     */
+    private byte[] externalEncapMessageContent;
+
+    // version info
+    /**
+     * Class from the Java SDK that provides the functionality of a digital signature algorithm.
+     */
+    private Signature sig;
+    /**
+     * The raw signature value as calculated by this class (or extracted from an existing PDF)
+     */
+    private byte[] signatureValue;
+    /**
+     * The content to which the signature applies, if encapsulated in the PKCS #7 payload.
+     */
+    private byte[] encapMessageContent;
+    /**
+     * Signature attributes
+     */
+    private byte[] sigAttr;
+
+    // Message digest algorithm
+    /**
+     * Signature attributes (maybe not necessary, but we use it as fallback)
+     */
+    private byte[] sigAttrDer;
+    /**
+     * encrypted digest
+     */
+    private MessageDigest encContDigest; // Stefan Santesson
+    /**
+     * Indicates if a signature has already been verified
+     */
+    private boolean verified;
+    /**
+     * The result of the verification
+     */
+    private boolean verifyResult;
+    /**
+     * The X.509 certificate that is used to sign the digest.
+     */
+    private X509Certificate signCert;
+    private Collection<CRL> crls;
+    /**
+     * True if there's a PAdES LTV time stamp.
+     */
+    private boolean isTsp;
+    /**
+     * True if it's a CAdES signature type.
+     */
+    private boolean isCades;
+    /**
+     * BouncyCastle TSTInfo.
+     */
+    private ITSTInfo timeStampTokenInfo;
+
+    private final IExternalSignature interfaceSignature;
 
     /**
      * Assembles all the elements needed to create a signature, except for the data.
      *
-     * @param privKey         the private key
-     * @param certChain       the certificate chain
-     * @param interfaceDigest the interface digest
-     * @param hashAlgorithm   the hash algorithm
-     * @param provider        the provider or <code>null</code> for the default provider
-     * @param hasEncapContent <CODE>true</CODE> if the sub-filter is adbe.pkcs7.sha1
+     * @param privKey            the private key
+     * @param certChain          the certificate chain
+     * @param hashAlgorithm      the hash algorithm
+     * @param provider           the provider or <code>null</code> for the default provider
+     * @param interfaceDigest    the interface digest
+     * @param hasEncapContent    <CODE>true</CODE> if the sub-filter is adbe.pkcs7.sha1
+     * @param interfaceSignature the interface signature
      * @throws InvalidKeyException      on error
      * @throws NoSuchProviderException  on error
      * @throws NoSuchAlgorithmException on error
      */
     public PdfPKCS7(PrivateKey privKey, Certificate[] certChain,
-                    String hashAlgorithm, String provider, IExternalDigest interfaceDigest, boolean hasEncapContent)
+                    String hashAlgorithm, String provider, IExternalDigest interfaceDigest, boolean hasEncapContent, IExternalSignature interfaceSignature)
             throws InvalidKeyException, NoSuchProviderException, NoSuchAlgorithmException {
         this.provider = provider;
         this.interfaceDigest = interfaceDigest;
         // message digest
-        digestAlgorithmOid = DigestAlgorithms.getAllowedDigest(hashAlgorithm);
-        if (digestAlgorithmOid == null) {
-            throw new PdfException(SignExceptionMessageConstant.UNKNOWN_HASH_ALGORITHM)
-                    .setMessageParams(hashAlgorithm);
-        }
+        determinateDigestAlgorithm(interfaceDigest, hashAlgorithm);
 
         // Copy the certificates
         signCert = (X509Certificate) certChain[0];
         certs = new ArrayList<>();
-        for (Certificate element : certChain) {
-            certs.add(element);
-        }
+        Collections.addAll(certs, certChain);
 
         // initialize and add the digest algorithms.
         digestalgos = new HashSet<>();
@@ -168,12 +235,7 @@ public class PdfPKCS7 {
         // find the signing algorithm
         if (privKey != null) {
             String signatureAlgo = SignUtils.getPrivateKeyAlgorithm(privKey);
-            String mechanismOid = SignatureMechanisms.getSignatureMechanismOid(signatureAlgo, hashAlgorithm);
-            if (mechanismOid == null) {
-                throw new PdfException(SignExceptionMessageConstant.COULD_NOT_DETERMINE_SIGNATURE_MECHANISM_OID)
-                        .setMessageParams(signatureAlgo, hashAlgorithm);
-            }
-            this.signatureMechanismOid = mechanismOid;
+            this.signatureMechanismOid = determinateSigningAlgorithm(interfaceSignature, signatureAlgo, hashAlgorithm);
         }
 
         // initialize the encapsulated content
@@ -186,9 +248,8 @@ public class PdfPKCS7 {
         if (privKey != null) {
             sig = initSignature(privKey);
         }
+        this.interfaceSignature = interfaceSignature;
     }
-
-    // Constructors for validating existing signatures
 
     /**
      * Use this constructor if you want to verify a signature using the sub-filter adbe.x509.rsa_sha1.
@@ -198,7 +259,7 @@ public class PdfPKCS7 {
      * @param provider    the provider or <code>null</code> for the default provider
      */
     @SuppressWarnings("unchecked")
-    public PdfPKCS7(byte[] contentsKey, byte[] certsKey, String provider) {
+    public PdfPKCS7(byte[] contentsKey, byte[] certsKey, String provider, IExternalDigest interfaceDigest, IExternalSignature interfaceSignature) {
         try {
             this.provider = provider;
             certs = SignUtils.readAllCerts(certsKey);
@@ -207,7 +268,7 @@ public class PdfPKCS7 {
             crls = new ArrayList<>();
 
             try (IASN1InputStream in =
-                    BOUNCY_CASTLE_FACTORY.createASN1InputStream(new ByteArrayInputStream(contentsKey))) {
+                         BOUNCY_CASTLE_FACTORY.createASN1InputStream(new ByteArrayInputStream(contentsKey))) {
                 signatureValue = BOUNCY_CASTLE_FACTORY.createASN1OctetString(in.readObject()).getOctets();
             }
 
@@ -217,10 +278,13 @@ public class PdfPKCS7 {
             // setting the oid to SHA1withRSA
             digestAlgorithmOid = "1.2.840.10040.4.3";
             signatureMechanismOid = "1.3.36.3.3.1.2";
+            this.interfaceDigest = interfaceDigest;
+            this.interfaceSignature = interfaceSignature;
         } catch (Exception e) {
             throw new PdfException(e);
         }
     }
+
 
     /**
      * Use this constructor if you want to verify a signature.
@@ -230,10 +294,12 @@ public class PdfPKCS7 {
      * @param provider      the provider or <code>null</code> for the default provider
      */
     @SuppressWarnings({"unchecked"})
-    public PdfPKCS7(byte[] contentsKey, PdfName filterSubtype, String provider) {
+    public PdfPKCS7(byte[] contentsKey, PdfName filterSubtype, String provider, IExternalDigest interfaceDigest, IExternalSignature interfaceSignature) {
         this.filterSubtype = filterSubtype;
         isTsp = PdfName.ETSI_RFC3161.equals(filterSubtype);
         isCades = PdfName.ETSI_CAdES_DETACHED.equals(filterSubtype);
+        this.interfaceDigest = interfaceDigest;
+        this.interfaceSignature = interfaceSignature;
         try {
             this.provider = provider;
 
@@ -243,7 +309,7 @@ public class PdfPKCS7 {
             IASN1Primitive pkcs;
 
             try (IASN1InputStream din =
-                    BOUNCY_CASTLE_FACTORY.createASN1InputStream(new ByteArrayInputStream(contentsKey))) {
+                         BOUNCY_CASTLE_FACTORY.createASN1InputStream(new ByteArrayInputStream(contentsKey))) {
                 pkcs = din.readObject();
             } catch (IOException e) {
                 throw new IllegalArgumentException(
@@ -381,8 +447,11 @@ public class PdfPKCS7 {
                         IESSCertIDv2 cerv2 = cerv2m[0];
                         IAlgorithmIdentifier ai2 = cerv2.getHashAlgorithm();
                         byte[] enc2 = signCert.getEncoded();
-                        MessageDigest m2
-                                = SignUtils.getMessageDigest(DigestAlgorithms.getDigest(ai2.getAlgorithm().getId()));
+                        String signDigestAlgoOid = ai2.getAlgorithm().getId();
+                        MessageDigest m2 = interfaceDigest == null ?
+                                SignUtils.getMessageDigest(DigestAlgorithms.getDigest(signDigestAlgoOid)) :
+                                interfaceDigest.getMessageDigest(signDigestAlgoOid);
+
                         byte[] signCertHash = m2.digest(enc2);
                         byte[] hs2 = cerv2.getCertHash();
                         if (!Arrays.equals(signCertHash, hs2)) {
@@ -449,6 +518,37 @@ public class PdfPKCS7 {
         }
     }
 
+    /*
+     *	DIGITAL SIGNATURE CREATION
+     */
+
+    private String determinateSigningAlgorithm(IExternalSignature interfaceSignature, String signatureAlgo, String hashAlgorithm) {
+        String mechanismOid = interfaceSignature == null ? SignatureMechanisms.getSignatureMechanismOid(signatureAlgo, hashAlgorithm) :
+                interfaceSignature.getSignatureMechanismOid();
+        if (mechanismOid == null) {
+            throw new PdfException(SignExceptionMessageConstant.COULD_NOT_DETERMINE_SIGNATURE_MECHANISM_OID)
+                    .setMessageParams(signatureAlgo, hashAlgorithm);
+        }
+        return mechanismOid;
+    }
+    // The signature is created externally
+
+    private void determinateDigestAlgorithm(IExternalDigest interfaceDigest, String hashAlgorithm) {
+        if (interfaceDigest == null) {
+            digestAlgorithmOid = DigestAlgorithms.getAllowedDigest(hashAlgorithm);
+            if (digestAlgorithmOid == null) {
+                throw new PdfException(SignExceptionMessageConstant.UNKNOWN_HASH_ALGORITHM)
+                        .setMessageParams(hashAlgorithm);
+            }
+        }
+        try {
+            digestAlgorithmOid = interfaceDigest.getMessageDigestOid(hashAlgorithm);
+        } catch (GeneralSecurityException e) {
+            throw new PdfException(SignExceptionMessageConstant.UNKNOWN_HASH_ALGORITHM, e)
+                    .setMessageParams(hashAlgorithm);
+        }
+    }
+
     public void setSignaturePolicy(SignaturePolicyInfo signaturePolicy) {
         this.signaturePolicyIdentifier = signaturePolicy.toSignaturePolicyIdentifier();
     }
@@ -465,6 +565,7 @@ public class PdfPKCS7 {
     public String getSignName() {
         return this.signName;
     }
+    // The signature is created internally
 
     /**
      * Setter for property sigName.
@@ -492,6 +593,8 @@ public class PdfPKCS7 {
     public void setReason(String reason) {
         this.reason = reason;
     }
+
+    // Signing functionality.
 
     /**
      * Getter for property location.
@@ -534,17 +637,7 @@ public class PdfPKCS7 {
         this.signDate = signDate;
     }
 
-    // version info
-
-    /**
-     * Version of the PKCS#7 object
-     */
-    private int version = 1;
-
-    /**
-     * Version of the PKCS#7 "SignerInfo" object.
-     */
-    private int signerversion = 1;
+    // adbe.x509.rsa_sha1 (PKCS#1)
 
     /**
      * Get the version of the PKCS#7 object.
@@ -555,6 +648,8 @@ public class PdfPKCS7 {
         return version;
     }
 
+    // other subfilters (PKCS#7)
+
     /**
      * Get the version of the PKCS#7 "SignerInfo" object.
      *
@@ -563,37 +658,6 @@ public class PdfPKCS7 {
     public int getSigningInfoVersion() {
         return signerversion;
     }
-
-    // Message digest algorithm
-
-    /**
-     * The ID of the digest algorithm, e.g. "2.16.840.1.101.3.4.2.1".
-     */
-    private String digestAlgorithmOid;
-
-    /**
-     * The object that will create the digest
-     */
-    private MessageDigest messageDigest;
-
-    /**
-     * The digest algorithms
-     */
-    private Set<String> digestalgos;
-
-    /**
-     * The digest attributes
-     */
-    private byte[] digestAttr;
-
-    private PdfName filterSubtype;
-
-    /**
-     * The signature algorithm.
-     */
-    private String signatureMechanismOid;
-
-    private IASN1Encodable signatureMechanismParameters = null;
 
     /**
      * Getter for the ID of the digest algorithm, e.g. "2.16.840.1.101.3.4.2.1".
@@ -621,7 +685,7 @@ public class PdfPKCS7 {
             throw new PdfException(SignExceptionMessageConstant.ALGO_REQUIRES_SPECIFIC_HASH)
                     .setMessageParams("Ed25519", "SHA-512", hashAlgoName);
         } else if (SecurityIDs.ID_ED448.equals(this.signatureMechanismOid)
-                    && !SecurityIDs.ID_SHAKE256.equals(digestAlgorithmOid)) {
+                && !SecurityIDs.ID_SHAKE256.equals(digestAlgorithmOid)) {
             throw new PdfException(SignExceptionMessageConstant.ALGO_REQUIRES_SPECIFIC_HASH)
                     .setMessageParams("Ed448", "512-bit SHAKE256", hashAlgoName);
         }
@@ -637,6 +701,8 @@ public class PdfPKCS7 {
     public String getSignatureMechanismOid() {
         return signatureMechanismOid;
     }
+
+    // Authenticated attributes
 
     /**
      * Get the signature mechanism identifier, including both the digest function
@@ -661,7 +727,6 @@ public class PdfPKCS7 {
         }
     }
 
-
     /**
      * Returns the name of the signature algorithm only (disregarding the digest function, if any).
      *
@@ -676,32 +741,18 @@ public class PdfPKCS7 {
     }
 
     /*
-     *	DIGITAL SIGNATURE CREATION
+     *	DIGITAL SIGNATURE VERIFICATION
      */
-
-    private IExternalDigest interfaceDigest;
-    // The signature is created externally
-
-    /**
-     * The signature value or signed digest, if created outside this class
-     */
-    private byte[] externalSignatureValue;
-
-    /**
-     * Externally specified encapsulated message content.
-     */
-    private byte[] externalEncapMessageContent;
-
 
     /**
      * Sets the signature to an externally calculated value.
      *
-     * @param signatureValue            the signature value
-     * @param signedMessageContent      the extra data that goes into the data tag in PKCS#7
-     * @param signatureAlgorithm        the signature algorithm. It must be <CODE>null</CODE> if the
-     *                                  <CODE>signatureValue</CODE> is also <CODE>null</CODE>.
-     *                                  If the <CODE>signatureValue</CODE> is not <CODE>null</CODE>,
-     *                                  possible values include "RSA", "DSA", "ECDSA", "Ed25519" and "Ed448".
+     * @param signatureValue       the signature value
+     * @param signedMessageContent the extra data that goes into the data tag in PKCS#7
+     * @param signatureAlgorithm   the signature algorithm. It must be <CODE>null</CODE> if the
+     *                             <CODE>signatureValue</CODE> is also <CODE>null</CODE>.
+     *                             If the <CODE>signatureValue</CODE> is not <CODE>null</CODE>,
+     *                             possible values include "RSA", "DSA", "ECDSA", "Ed25519" and "Ed448".
      */
     public void setExternalSignatureValue(byte[] signatureValue, byte[] signedMessageContent, String signatureAlgorithm) {
         setExternalSignatureValue(signatureValue, signedMessageContent, signatureAlgorithm, null);
@@ -710,14 +761,14 @@ public class PdfPKCS7 {
     /**
      * Sets the signature to an externally calculated value.
      *
-     * @param signatureValue            the signature value
-     * @param signedMessageContent      the extra data that goes into the data tag in PKCS#7
-     * @param signatureAlgorithm        the signature algorithm. It must be <CODE>null</CODE> if the
-     *                                  <CODE>signatureValue</CODE> is also <CODE>null</CODE>.
-     *                                  If the <CODE>signatureValue</CODE> is not <CODE>null</CODE>,
-     *                                  possible values include "RSA", "RSASSA-PSS", "DSA",
-     *                                  "ECDSA", "Ed25519" and "Ed448".
-     * @param signatureMechanismParams  parameters for the signature mechanism, if required
+     * @param signatureValue           the signature value
+     * @param signedMessageContent     the extra data that goes into the data tag in PKCS#7
+     * @param signatureAlgorithm       the signature algorithm. It must be <CODE>null</CODE> if the
+     *                                 <CODE>signatureValue</CODE> is also <CODE>null</CODE>.
+     *                                 If the <CODE>signatureValue</CODE> is not <CODE>null</CODE>,
+     *                                 possible values include "RSA", "RSASSA-PSS", "DSA",
+     *                                 "ECDSA", "Ed25519" and "Ed448".
+     * @param signatureMechanismParams parameters for the signature mechanism, if required
      */
     public void setExternalSignatureValue(
             byte[] signatureValue, byte[] signedMessageContent,
@@ -726,35 +777,12 @@ public class PdfPKCS7 {
         externalEncapMessageContent = signedMessageContent;
         if (signatureAlgorithm != null) {
             String digestAlgo = this.getDigestAlgorithmName();
-            String oid = SignatureMechanisms.getSignatureMechanismOid(signatureAlgorithm, digestAlgo);
-            if (oid == null) {
-                throw new PdfException(SignExceptionMessageConstant.COULD_NOT_DETERMINE_SIGNATURE_MECHANISM_OID)
-                        .setMessageParams(signatureAlgorithm, digestAlgo);
-            }
-            this.signatureMechanismOid = oid;
+            this.signatureMechanismOid = determinateSigningAlgorithm(interfaceSignature, signatureAlgorithm, digestAlgo);
         }
         if (signatureMechanismParams != null) {
             this.signatureMechanismParameters = signatureMechanismParams.toEncodable();
         }
     }
-    // The signature is created internally
-
-    /**
-     * Class from the Java SDK that provides the functionality of a digital signature algorithm.
-     */
-    private Signature sig;
-
-    /**
-     * The raw signature value as calculated by this class (or extracted from an existing PDF)
-     */
-    private byte[] signatureValue;
-
-    /**
-     * The content to which the signature applies, if encapsulated in the PKCS #7 payload.
-     */
-    private byte[] encapMessageContent;
-
-    // Signing functionality.
 
     private Signature initSignature(PrivateKey key) throws NoSuchAlgorithmException, NoSuchProviderException,
             InvalidKeyException {
@@ -808,17 +836,19 @@ public class PdfPKCS7 {
                 throw new IllegalArgumentException(
                         MessageFormatUtil.format(
                                 SignExceptionMessageConstant.DISGEST_ALGORITM_MGF_MISMATCH,
-                         mgfParamDigestAlgoOid , this.digestAlgorithmOid));
+                                mgfParamDigestAlgoOid, this.digestAlgorithmOid));
             }
             try {
                 int saltLength = params.getSaltLength().intValue();
                 int trailerField = params.getTrailerField().intValue();
                 SignUtils.setRSASSAPSSParamsWithMGF1(signature, getDigestAlgorithmName(), saltLength, trailerField);
             } catch (InvalidAlgorithmParameterException e) {
-                throw new IllegalArgumentException(SignExceptionMessageConstant.INVALID_ARGUMENTS,e);
+                throw new IllegalArgumentException(SignExceptionMessageConstant.INVALID_ARGUMENTS, e);
             }
         }
     }
+
+    // verification
 
     /**
      * Update the digest with the specified bytes.
@@ -827,7 +857,6 @@ public class PdfPKCS7 {
      * @param buf the data buffer
      * @param off the offset in the data buffer
      * @param len the data length
-     *
      * @throws SignatureException on error
      */
     public void update(byte[] buf, int off, int len) throws SignatureException {
@@ -837,8 +866,6 @@ public class PdfPKCS7 {
             sig.update(buf, off, len);
         }
     }
-
-    // adbe.x509.rsa_sha1 (PKCS#1)
 
     /**
      * Gets the bytes for the PKCS#1 object.
@@ -864,8 +891,6 @@ public class PdfPKCS7 {
         }
     }
 
-    // other subfilters (PKCS#7)
-
     /**
      * Gets the bytes for the PKCS7SignedData object.
      *
@@ -875,12 +900,13 @@ public class PdfPKCS7 {
         return getEncodedPKCS7(null, PdfSigner.CryptoStandard.CMS, null, null, null);
     }
 
+    // Certificates
+
     /**
      * Gets the bytes for the PKCS7SignedData object. Optionally the authenticatedAttributes
      * in the signerInfo can also be set. If either of the parameters is <CODE>null</CODE>, none will be used.
      *
      * @param secondDigest the digest in the authenticatedAttributes
-     *
      * @return the bytes for the PKCS7SignedData object
      */
     public byte[] getEncodedPKCS7(byte[] secondDigest) {
@@ -901,13 +927,11 @@ public class PdfPKCS7 {
      *                     chain, or null if OCSP revocation data is not to be added.
      * @param crlBytes     collection of DER-encoded CRL for certificates from the signature certificates chain,
      *                     or null if CRL revocation data is not to be added.
-     *
      * @return byte[] the bytes for the PKCS7SignedData object
-     *
      * @see <a href="https://datatracker.ietf.org/doc/html/rfc6960#section-4.2.1">RFC 6960 § 4.2.1</a>
      */
     public byte[] getEncodedPKCS7(byte[] secondDigest, PdfSigner.CryptoStandard sigtype, ITSAClient tsaClient,
-            Collection<byte[]> ocsp, Collection<byte[]> crlBytes) {
+                                  Collection<byte[]> ocsp, Collection<byte[]> crlBytes) {
         try {
             if (externalSignatureValue != null) {
                 signatureValue = externalSignatureValue;
@@ -1043,9 +1067,7 @@ public class PdfPKCS7 {
      * handled by the (vendor supplied) TSA request/response interface).
      *
      * @param timeStampToken byte[] - time stamp token, DER encoded signedData
-     *
      * @return {@link IASN1EncodableVector}
-     *
      * @throws IOException
      */
     private IASN1EncodableVector buildUnauthenticatedAttributes(byte[] timeStampToken) throws IOException {
@@ -1061,7 +1083,7 @@ public class PdfPKCS7 {
         IASN1EncodableVector v = BOUNCY_CASTLE_FACTORY.createASN1EncodableVector();
         v.add(BOUNCY_CASTLE_FACTORY.createASN1ObjectIdentifier(ID_TIME_STAMP_TOKEN)); // id-aa-timeStampToken
         try (IASN1InputStream tempstream =
-                BOUNCY_CASTLE_FACTORY.createASN1InputStream(new ByteArrayInputStream(timeStampToken))) {
+                     BOUNCY_CASTLE_FACTORY.createASN1InputStream(new ByteArrayInputStream(timeStampToken))) {
             IASN1Sequence seq = BOUNCY_CASTLE_FACTORY.createASN1Sequence(tempstream.readObject());
             v.add(BOUNCY_CASTLE_FACTORY.createDERSet(seq));
         }
@@ -1069,8 +1091,6 @@ public class PdfPKCS7 {
         unauthAttributes.add(BOUNCY_CASTLE_FACTORY.createDERSequence(v));
         return unauthAttributes;
     }
-
-    // Authenticated attributes
 
     /**
      * When using authenticatedAttributes the authentication process is different.
@@ -1108,13 +1128,11 @@ public class PdfPKCS7 {
      *                     chain, or null if OCSP revocation data is not to be added.
      * @param crlBytes     collection of DER-encoded CRL for certificates from the signature certificates chain,
      *                     or null if CRL revocation data is not to be added.
-     *
      * @return the byte array representation of the authenticatedAttributes ready to be signed
-     *
      * @see <a href="https://datatracker.ietf.org/doc/html/rfc6960#section-4.2.1">RFC 6960 § 4.2.1</a>
      */
     public byte[] getAuthenticatedAttributeBytes(byte[] secondDigest, PdfSigner.CryptoStandard sigtype,
-            Collection<byte[]> ocsp, Collection<byte[]> crlBytes) {
+                                                 Collection<byte[]> ocsp, Collection<byte[]> crlBytes) {
         try {
             return getAuthenticatedAttributeSet(secondDigest, ocsp, crlBytes, sigtype)
                     .getEncoded(BOUNCY_CASTLE_FACTORY.createASN1Encoding().getDer());
@@ -1128,11 +1146,10 @@ public class PdfPKCS7 {
      * exactly the same as in {@link #getEncodedPKCS7(byte[])}.
      *
      * @param secondDigest the content digest
-     *
      * @return the byte array representation of the authenticatedAttributes ready to be signed
      */
     private IDERSet getAuthenticatedAttributeSet(byte[] secondDigest, Collection<byte[]> ocsp,
-            Collection<byte[]> crlBytes, PdfSigner.CryptoStandard sigtype) {
+                                                 Collection<byte[]> crlBytes, PdfSigner.CryptoStandard sigtype) {
         try {
             IASN1EncodableVector attribute = BOUNCY_CASTLE_FACTORY.createASN1EncodableVector();
             IASN1EncodableVector v = BOUNCY_CASTLE_FACTORY.createASN1EncodableVector();
@@ -1166,7 +1183,7 @@ public class PdfPKCS7 {
                             continue;
                         }
                         try (IASN1InputStream t =
-                                BOUNCY_CASTLE_FACTORY.createASN1InputStream(new ByteArrayInputStream(bCrl))) {
+                                     BOUNCY_CASTLE_FACTORY.createASN1InputStream(new ByteArrayInputStream(bCrl))) {
                             v2.add(t.readObject());
                         }
                     }
@@ -1226,36 +1243,6 @@ public class PdfPKCS7 {
         }
     }
 
-    /*
-     *	DIGITAL SIGNATURE VERIFICATION
-     */
-
-    /**
-     * Signature attributes
-     */
-    private byte[] sigAttr;
-    /**
-     * Signature attributes (maybe not necessary, but we use it as fallback)
-     */
-    private byte[] sigAttrDer;
-
-    /**
-     * encrypted digest
-     */
-    private MessageDigest encContDigest; // Stefan Santesson
-
-    /**
-     * Indicates if a signature has already been verified
-     */
-    private boolean verified;
-
-    /**
-     * The result of the verification
-     */
-    private boolean verifyResult;
-
-    // verification
-
     /**
      * Verifies that signature integrity is intact (or in other words that signed data wasn't modified)
      * by checking that embedded data digest corresponds to the calculated one. Also ensures that signature
@@ -1268,7 +1255,6 @@ public class PdfPKCS7 {
      * use {@link SignatureUtil#signatureCoversWholeDocument(String)} method.
      *
      * @return <CODE>true</CODE> if the signature checks out, <CODE>false</CODE> otherwise
-     *
      * @throws java.security.GeneralSecurityException if this signature object is not initialized properly,
      *                                                the passed-in signature is improperly encoded or of the wrong
      *                                                type, if this signature algorithm is unable to
@@ -1317,11 +1303,12 @@ public class PdfPKCS7 {
         return signature.verify(signatureValue);
     }
 
+    // Certificate Revocation Lists
+
     /**
      * Checks if the timestamp refers to this document.
      *
      * @return true if it checks false otherwise
-     *
      * @throws GeneralSecurityException on error
      */
     public boolean verifyTimestampImprint() throws GeneralSecurityException {
@@ -1335,23 +1322,6 @@ public class PdfPKCS7 {
         byte[] imphashed = imprint.getHashedMessage();
         return Arrays.equals(md, imphashed);
     }
-
-    // Certificates
-
-    /**
-     * All the X.509 certificates in no particular order.
-     */
-    private Collection<Certificate> certs;
-
-    /**
-     * All the X.509 certificates used for the main signature.
-     */
-    Collection<Certificate> signCerts;
-
-    /**
-     * The X.509 certificate that is used to sign the digest.
-     */
-    private X509Certificate signCert;
 
     /**
      * Get all the X.509 certificates associated with this PKCS#7 object in no particular order.
@@ -1373,6 +1343,8 @@ public class PdfPKCS7 {
     public Certificate[] getSignCertificateChain() {
         return signCerts.toArray(new X509Certificate[signCerts.size()]);
     }
+
+    // Online Certificate Status Protocol
 
     /**
      * Get the X.509 certificate actually used to sign the digest.
@@ -1415,10 +1387,6 @@ public class PdfPKCS7 {
         signCerts = cc;
     }
 
-    // Certificate Revocation Lists
-
-    private Collection<CRL> crls;
-
     /**
      * Get the X.509 certificate revocation lists associated with this PKCS#7 object
      *
@@ -1445,12 +1413,7 @@ public class PdfPKCS7 {
         }
     }
 
-    // Online Certificate Status Protocol
-
-    /**
-     * BouncyCastle IBasicOCSPResponse
-     */
-    IBasicOCSPResponse basicResp;
+    // Time Stamps
 
     /**
      * Gets the OCSP basic response if there is one.
@@ -1490,7 +1453,6 @@ public class PdfPKCS7 {
      * Helper method that creates the IBasicOCSPResp object.
      *
      * @param seq
-     *
      * @throws IOException
      */
     private void findOcsp(IASN1Sequence seq) throws IOException {
@@ -1533,23 +1495,6 @@ public class PdfPKCS7 {
             basicResp = BOUNCY_CASTLE_FACTORY.createBasicOCSPResponse(inp.readObject());
         }
     }
-
-    // Time Stamps
-
-    /**
-     * True if there's a PAdES LTV time stamp.
-     */
-    private boolean isTsp;
-
-    /**
-     * True if it's a CAdES signature type.
-     */
-    private boolean isCades;
-
-    /**
-     * BouncyCastle TSTInfo.
-     */
-    private ITSTInfo timeStampTokenInfo;
 
     /**
      * Check if it's a PAdES-LTV time stamp.

@@ -164,25 +164,25 @@ public class LtvVerification {
     /**
      * Add verification for a particular signature.
      *
-     * @param signatureName the signature to validate (it may be a timestamp)
-     * @param ocsp          the interface to get the OCSP
-     * @param crl           the interface to get the CRL
-     * @param certOption    options as to how many certificates to include
-     * @param level         the validation options to include
-     * @param certInclude   certificate inclusion options
-     *
+     * @param signatureName     the signature to validate (it may be a timestamp)
+     * @param ocsp              the interface to get the OCSP
+     * @param crl               the interface to get the CRL
+     * @param certOption        options as to how many certificates to include
+     * @param level             the validation options to include
+     * @param certInclude       certificate inclusion options
+     * @param externalDigest
+     * @param externalSignature
      * @return true if a validation was generated, false otherwise
-     *
      * @throws GeneralSecurityException when requested cryptographic algorithm or security provider
      *                                  is not available
      * @throws IOException              signals that an I/O exception has occurred
      */
     public boolean addVerification(String signatureName, IOcspClient ocsp, ICrlClient crl, CertificateOption certOption,
-            Level level, CertificateInclusion certInclude) throws IOException, GeneralSecurityException {
+                                   Level level, CertificateInclusion certInclude, IExternalDigest externalDigest, IExternalSignature externalSignature) throws IOException, GeneralSecurityException {
         if (used) {
             throw new IllegalStateException(SignExceptionMessageConstant.VERIFICATION_ALREADY_OUTPUT);
         }
-        PdfPKCS7 pk = sgnUtil.readSignatureData(signatureName, securityProviderCode);
+        PdfPKCS7 pk = sgnUtil.readSignatureData(signatureName, securityProviderCode, externalDigest, externalSignature);
         LOGGER.info("Adding verification for " + signatureName);
         Certificate[] xc = pk.getCertificates();
         X509Certificate cert;
