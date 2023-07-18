@@ -163,7 +163,8 @@ public class RSASSAPSSTest extends ExtendedITextTest {
             String provider = FACTORY.getProviderName();
             PdfException pdfException = Assert.assertThrows(
                     PdfException.class,
-                    () -> u.readSignatureData(SIGNATURE_FIELD, provider, null,null)
+                    () -> u.readSignatureData(SIGNATURE_FIELD, provider, null,null,
+                      null)
             );
         }
     }
@@ -196,7 +197,8 @@ public class RSASSAPSSTest extends ExtendedITextTest {
     private void doVerify(String fileName) throws IOException, GeneralSecurityException {
         try (PdfReader r = new PdfReader(fileName); PdfDocument pdfDoc = new PdfDocument(r)) {
             SignatureUtil u = new SignatureUtil(pdfDoc);
-            PdfPKCS7 data = u.readSignatureData(SIGNATURE_FIELD, FACTORY.getProviderName(), null,null);
+            PdfPKCS7 data = u.readSignatureData(SIGNATURE_FIELD, FACTORY.getProviderName(), null,null,
+              null);
             Assert.assertEquals(SecurityIDs.ID_RSASSA_PSS, data.getSignatureMechanismOid());
             Assert.assertTrue(data.verifySignatureIntegrityAndAuthenticity());
         }

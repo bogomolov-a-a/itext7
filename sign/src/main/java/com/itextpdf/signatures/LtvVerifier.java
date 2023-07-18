@@ -45,6 +45,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -93,20 +94,25 @@ public class LtvVerifier extends RootStoreVerifier {
     /**
      * Creates a VerificationData object for a PdfReader
      *
-     * @param document          The document we want to verify.
+     * @param document                   The document we want to verify.
      * @param externalDigest
      * @param externalSignature
+     * @param externalCertificateFactory
      * @throws GeneralSecurityException if some problem with signature or security are occurred
      */
-    public LtvVerifier(PdfDocument document, IExternalDigest externalDigest, IExternalSignature externalSignature) throws GeneralSecurityException {
+    public LtvVerifier(PdfDocument document, IExternalDigest externalDigest, IExternalSignature externalSignature,
+                       CertificateFactory externalCertificateFactory) throws GeneralSecurityException {
         super(null);
-        initLtvVerifier(document, externalDigest, externalSignature);
+        initLtvVerifier(document, externalDigest, externalSignature,
+          externalCertificateFactory);
     }
 
-    public LtvVerifier(PdfDocument document, String securityProviderCode, IExternalDigest externalDigest, IExternalSignature externalSignature) throws GeneralSecurityException {
+    public LtvVerifier(PdfDocument document, String securityProviderCode, IExternalDigest externalDigest, IExternalSignature externalSignature,
+                       CertificateFactory externalCertificateFactory) throws GeneralSecurityException {
         super(null);
         this.securityProviderCode = securityProviderCode;
-        initLtvVerifier(document, externalDigest, externalSignature);
+        initLtvVerifier(document, externalDigest, externalSignature,
+          externalCertificateFactory);
     }
 
     /**
@@ -148,19 +154,22 @@ public class LtvVerifier extends RootStoreVerifier {
     /**
      * Verifies all the document-level timestamps and all the signatures in the document.
      *
-     * @param result            a list of {@link VerificationOK} objects
+     * @param result                     a list of {@link VerificationOK} objects
      * @param externalDigest
      * @param externalSignature
+     * @param externalCertificateFactory
      * @return a list of all {@link VerificationOK} objects after verification
      * @throws IOException              signals that an I/O exception has occurred
      * @throws GeneralSecurityException if some problems with signature or security occurred
      */
-    public List<VerificationOK> verify(List<VerificationOK> result, IExternalDigest externalDigest, IExternalSignature externalSignature) throws IOException, GeneralSecurityException {
+    public List<VerificationOK> verify(List<VerificationOK> result, IExternalDigest externalDigest, IExternalSignature externalSignature,
+                                       CertificateFactory externalCertificateFactory) throws IOException, GeneralSecurityException {
         if (result == null) {
             result = new ArrayList<>();
         }
         while (pkcs7 != null) {
-            result.addAll(verifySignature(externalDigest, externalSignature));
+            result.addAll(verifySignature(externalDigest, externalSignature,
+              externalCertificateFactory));
         }
         return result;
     }
@@ -173,7 +182,8 @@ public class LtvVerifier extends RootStoreVerifier {
      * @throws GeneralSecurityException if some problems with signature or security occurred
      * @throws IOException              signals that an I/O exception has occurred
      */
-    public List<VerificationOK> verifySignature(IExternalDigest externalDigest, IExternalSignature externalSignature) throws GeneralSecurityException, IOException {
+    public List<VerificationOK> verifySignature(IExternalDigest externalDigest, IExternalSignature externalSignature,
+                                                CertificateFactory externalCertificateFactory) throws GeneralSecurityException, IOException {
         LOGGER.info("Verifying signature.");
         List<VerificationOK> result = new ArrayList<>();
         // Get the certificate chain
@@ -217,7 +227,8 @@ public class LtvVerifier extends RootStoreVerifier {
             result.addAll(list);
         }
         // go to the previous revision
-        switchToPreviousRevision(externalDigest, externalSignature);
+        switchToPreviousRevision(externalDigest, externalSignature,
+          externalCertificateFactory);
         return result;
     }
 
@@ -282,7 +293,8 @@ public class LtvVerifier extends RootStoreVerifier {
      * @throws IOException              signals that an I/O exception has occurred
      * @throws GeneralSecurityException if some problems with signature or security occurred
      */
-    public void switchToPreviousRevision(IExternalDigest externalDigest, IExternalSignature externalSignature) throws IOException, GeneralSecurityException {
+    public void switchToPreviousRevision(IExternalDigest externalDigest, IExternalSignature externalSignature,
+                                         CertificateFactory externalCertificateFactory) throws IOException, GeneralSecurityException {
         LOGGER.info("Switching to previous revision.");
         latestRevision = false;
         dss = document.getCatalog().getPdfObject().getAsDictionary(PdfName.DSS);
@@ -300,7 +312,8 @@ public class LtvVerifier extends RootStoreVerifier {
                 this.sgnUtil = new SignatureUtil(document);
                 names = sgnUtil.getSignatureNames();
                 signatureName = names.get(names.size() - 1);
-                pkcs7 = coversWholeDocument(externalDigest, externalSignature);
+                pkcs7 = coversWholeDocument(externalDigest, externalSignature,
+                  externalCertificateFactory);
                 LOGGER.info(
                         MessageFormatUtil.format("Checking {0}signature {1}", pkcs7.isTsp()
                                 ? "document-level timestamp "
@@ -371,14 +384,16 @@ public class LtvVerifier extends RootStoreVerifier {
         return ocsps;
     }
 
-    protected void initLtvVerifier(PdfDocument document, IExternalDigest externalDigest, IExternalSignature externalSignature) throws GeneralSecurityException {
+    protected void initLtvVerifier(PdfDocument document, IExternalDigest externalDigest, IExternalSignature externalSignature,
+                                   CertificateFactory externalCertificateFactory) throws GeneralSecurityException {
         this.document = document;
         this.acroForm = PdfFormCreator.getAcroForm(document, true);
         this.sgnUtil = new SignatureUtil(document);
         List<String> names = sgnUtil.getSignatureNames();
         signatureName = names.get(names.size() - 1);
         this.signDate = DateTimeUtil.getCurrentTimeDate();
-        pkcs7 = coversWholeDocument(externalDigest, externalSignature);
+        pkcs7 = coversWholeDocument(externalDigest, externalSignature,
+          externalCertificateFactory);
         LOGGER.info(
                 MessageFormatUtil.format(
                         "Checking {0}signature {1}", pkcs7.isTsp()
@@ -395,8 +410,10 @@ public class LtvVerifier extends RootStoreVerifier {
      *
      * @throws GeneralSecurityException if some problems with signature or security occurred
      */
-    protected PdfPKCS7 coversWholeDocument(IExternalDigest externalDigest, IExternalSignature externalSignature) throws GeneralSecurityException {
-        PdfPKCS7 pkcs7 = sgnUtil.readSignatureData(signatureName, securityProviderCode, externalDigest, externalSignature);
+    protected PdfPKCS7 coversWholeDocument(IExternalDigest externalDigest, IExternalSignature externalSignature,
+                                           CertificateFactory externalCertificateFactory) throws GeneralSecurityException {
+        PdfPKCS7 pkcs7 = sgnUtil.readSignatureData(signatureName, securityProviderCode, externalDigest, externalSignature,
+          externalCertificateFactory);
         if (sgnUtil.signatureCoversWholeDocument(signatureName)) {
             LOGGER.info("The timestamp covers whole document.");
         } else {

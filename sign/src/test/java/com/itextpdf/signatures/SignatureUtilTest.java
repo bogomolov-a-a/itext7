@@ -170,7 +170,8 @@ public class SignatureUtilTest extends ExtendedITextTest {
         PdfDocument pdfDocument = new PdfDocument(new PdfReader(inPdf));
         SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
 
-        Assert.assertNull(signatureUtil.readSignatureData("Signature1", null, null,null));
+        Assert.assertNull(signatureUtil.readSignatureData("Signature1", null, null,null,
+          null));
     }
 
     @Test
@@ -179,7 +180,8 @@ public class SignatureUtilTest extends ExtendedITextTest {
         PdfDocument pdfDocument = new PdfDocument(new PdfReader(inPdf));
         SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
 
-        PdfPKCS7 pkcs7 = signatureUtil.readSignatureData("Signature1", null,null);
+        PdfPKCS7 pkcs7 = signatureUtil.readSignatureData("Signature1", null,null,
+          null);
         Assert.assertNotNull(pkcs7);
         Assert.assertEquals("Test 1", pkcs7.getReason());
         Assert.assertNull(pkcs7.getSignName());
@@ -198,7 +200,8 @@ public class SignatureUtilTest extends ExtendedITextTest {
         PdfDocument pdfDocument = new PdfDocument(new PdfReader(inPdf));
         SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
 
-        PdfPKCS7 pkcs7 = signatureUtil.readSignatureData("Signature1", null,null);
+        PdfPKCS7 pkcs7 = signatureUtil.readSignatureData("Signature1", null,null,
+          null);
         Assert.assertNotNull(pkcs7);
         Assert.assertNotNull(pkcs7);
         Assert.assertEquals("Test", pkcs7.getReason());
@@ -219,7 +222,8 @@ public class SignatureUtilTest extends ExtendedITextTest {
         SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
 
         Assert.assertThrows(PdfException.class,
-                () -> signatureUtil.readSignatureData("Signature1", null,null));
+                () -> signatureUtil.readSignatureData("Signature1", null,null,
+                  null));
     }
 
     @Test

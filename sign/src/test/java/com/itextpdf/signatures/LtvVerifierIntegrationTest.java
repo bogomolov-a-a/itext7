@@ -68,9 +68,11 @@ public class LtvVerifierIntegrationTest extends ExtendedITextTest {
     public void verifySigningCertIsSelfSignedWithoutRevocationDataTest() throws IOException, GeneralSecurityException {
         String src = SOURCE_FOLDER + "signingCertIsSelfSignedWithoutRevocationData.pdf";
         try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(src))) {
-            LtvVerifier verifier = new LtvVerifier(pdfDocument, null, null);
+            LtvVerifier verifier = new LtvVerifier(pdfDocument, null, null,
+              null);
             verifier.setVerifyRootCertificate(false);
-            List<VerificationOK> verificationOKList = verifier.verifySignature(null,null);
+            List<VerificationOK> verificationOKList = verifier.verifySignature(null,null,
+              null);
             Assert.assertTrue(verificationOKList.isEmpty());
         }
     }
@@ -89,9 +91,11 @@ public class LtvVerifierIntegrationTest extends ExtendedITextTest {
     public void verifySigningCertHasChainWithoutRevocationDataTest() throws IOException, GeneralSecurityException {
         String src = SOURCE_FOLDER + "signingCertHasChainWithoutRevocationData.pdf";
         try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(src))) {
-            LtvVerifier verifier = new LtvVerifier(pdfDocument, null,null);
+            LtvVerifier verifier = new LtvVerifier(pdfDocument, null,null,
+              null);
             verifier.setVerifyRootCertificate(false);
-            Exception ex = Assert.assertThrows(VerificationException.class, () -> verifier.verifySignature(null,null));
+            Exception ex = Assert.assertThrows(VerificationException.class, () -> verifier.verifySignature(null,null,
+              null));
             Assert.assertEquals("Certificate C=BY,L=Minsk,O=iText,OU=test,CN=iTextTestRsaCert01 failed: "
                     + "Couldn't verify with CRL or OCSP or trusted anchor", ex.getMessage());
         }
@@ -118,16 +122,19 @@ public class LtvVerifierIntegrationTest extends ExtendedITextTest {
 
         String src = SOURCE_FOLDER + "signingCertHasChainWithOcspOnlyForChildCert.pdf";
         try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(src))) {
-            LtvVerifier verifier = new LtvVerifier(pdfDocument, null,null);
+            LtvVerifier verifier = new LtvVerifier(pdfDocument, null,null,
+              null);
             verifier.setCertificateOption(CertificateOption.WHOLE_CHAIN);
             verifier.setVerifyRootCertificate(false);
             // iText doesn't allow adding\processing DSS with one revision in document, so document
             // "signingCertHasChainWithOcspOnlyForChildCert.pdf" contains 2 revision. The first is
             // dummy revision (signing cert of first revision has a chain without any revocation data).
             // The second is main revision which verifying we want to test.
-            verifier.switchToPreviousRevision(null,null);
+            verifier.switchToPreviousRevision(null,null,
+              null);
 
-            List<VerificationOK> verificationOKList = verifier.verifySignature(null,null);
+            List<VerificationOK> verificationOKList = verifier.verifySignature(null,null,
+              null);
 
             Assert.assertEquals(2, verificationOKList.size());
             VerificationOK verificationOK = verificationOKList.get(0);
@@ -162,16 +169,19 @@ public class LtvVerifierIntegrationTest extends ExtendedITextTest {
 
         String src = SOURCE_FOLDER + "signingCertHasChainWithOcspOnlyForChildCert.pdf";
         try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(src))) {
-            LtvVerifier verifier = new LtvVerifier(pdfDocument, null,null);
+            LtvVerifier verifier = new LtvVerifier(pdfDocument, null,null,
+              null);
             verifier.setCertificateOption(CertificateOption.WHOLE_CHAIN);
             verifier.setVerifyRootCertificate(true);
             // iText doesn't allow adding\processing DSS with one revision in document, so document
             // "signingCertHasChainWithOcspOnlyForChildCert.pdf" contains 2 revision. The first is
             // dummy revision (signing cert of first revision has a chain without any revocation data).
             // The second is main revision which verifying we want to test.
-            verifier.switchToPreviousRevision(null,null);
+            verifier.switchToPreviousRevision(null,null,
+              null);
 
-            Exception ex = Assert.assertThrows(VerificationException.class, () -> verifier.verifySignature(null,null));
+            Exception ex = Assert.assertThrows(VerificationException.class, () -> verifier.verifySignature(null,null,
+              null));
             Assert.assertEquals("Certificate C=BY,L=Minsk,O=iText,OU=test,CN=iTextTestRoot failed: "
                     + "Couldn't verify with CRL or OCSP or trusted anchor", ex.getMessage());
         }
@@ -197,16 +207,19 @@ public class LtvVerifierIntegrationTest extends ExtendedITextTest {
 
         String src = SOURCE_FOLDER + "signingCertHas3ChainWithOcspOnlyForChildCert.pdf";
         try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(src))) {
-            LtvVerifier verifier = new LtvVerifier(pdfDocument, null,null);
+            LtvVerifier verifier = new LtvVerifier(pdfDocument, null,null,
+              null);
             verifier.setCertificateOption(CertificateOption.WHOLE_CHAIN);
             verifier.setVerifyRootCertificate(true);
             // iText doesn't allow adding\processing DSS with one revision in document, so document
             // "signingCertHas3ChainWithOcspOnlyForChildCert.pdf" contains 2 revision. The first is
             // dummy revision (signing cert of first revision has a chain without any revocation data).
             // The second is main revision which verifying we want to test.
-            verifier.switchToPreviousRevision(null,null);
+            verifier.switchToPreviousRevision(null,null,
+              null);
 
-            Exception ex = Assert.assertThrows(VerificationException.class, () -> verifier.verifySignature(null,null));
+            Exception ex = Assert.assertThrows(VerificationException.class, () -> verifier.verifySignature(null,null,
+              null));
             Assert.assertEquals("Certificate C=BY,L=Minsk,O=iText,OU=test,CN=iTextTestIntermediateRsa01 failed: "
                     + "Couldn't verify with CRL or OCSP or trusted anchor", ex.getMessage());
         }
@@ -233,19 +246,22 @@ public class LtvVerifierIntegrationTest extends ExtendedITextTest {
 
         String src = SOURCE_FOLDER + "signingCertHasChainWithOcspOnlyForChildCert.pdf";
         try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(src))) {
-            LtvVerifier verifier = new LtvVerifier(pdfDocument, null,null);
+            LtvVerifier verifier = new LtvVerifier(pdfDocument, null,null,
+              null);
             verifier.setCertificateOption(CertificateOption.WHOLE_CHAIN);
             verifier.setVerifyRootCertificate(true);
             // iText doesn't allow adding\processing DSS with one revision in document, so document
             // "signingCertHasChainWithOcspOnlyForChildCert.pdf" contains 2 revision. The first is
             // dummy revision (signing cert of first revision has a chain without any revocation data).
             // The second is main revision which verifying we want to test.
-            verifier.switchToPreviousRevision(null,null);
+            verifier.switchToPreviousRevision(null,null,
+              null);
             // TODO after implementing DEVSIX-6233, 1- pass local CRL for child certificate to LtvVerifier
             //  2- don't manually change latestRevision field 3- don't use first signature and DSS in test PDF document
             verifier.latestRevision = true;
 
-            List<VerificationOK> verificationOKList = verifier.verifySignature(null,null);
+            List<VerificationOK> verificationOKList = verifier.verifySignature(null,null,
+              null);
 
             Assert.assertEquals(3, verificationOKList.size());
             VerificationOK verificationOK = verificationOKList.get(0);
@@ -271,16 +287,21 @@ public class LtvVerifierIntegrationTest extends ExtendedITextTest {
 
         try(PdfReader pdfReader = new PdfReader(testInput); PdfDocument pdfDoc = new PdfDocument(pdfReader)) {
 
-            LtvVerifier ltvVerifier = new LtvVerifier(pdfDoc, null,null);
+            LtvVerifier ltvVerifier = new LtvVerifier(pdfDoc, null,null,
+              null);
 
             Assert.assertEquals("timestampSig2", ltvVerifier.signatureName);
-            ltvVerifier.switchToPreviousRevision(null,null);
+            ltvVerifier.switchToPreviousRevision(null,null,
+              null);
             Assert.assertEquals("Signature2", ltvVerifier.signatureName);
-            ltvVerifier.switchToPreviousRevision(null,null);
+            ltvVerifier.switchToPreviousRevision(null,null,
+              null);
             Assert.assertEquals("timestampSig1", ltvVerifier.signatureName);
-            ltvVerifier.switchToPreviousRevision(null,null);
+            ltvVerifier.switchToPreviousRevision(null,null,
+              null);
             Assert.assertEquals("Signature1", ltvVerifier.signatureName);
-            ltvVerifier.switchToPreviousRevision(null,null);
+            ltvVerifier.switchToPreviousRevision(null,null,
+              null);
         }
     }
 }

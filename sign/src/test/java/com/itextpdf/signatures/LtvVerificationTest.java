@@ -118,7 +118,8 @@ public class LtvVerificationTest extends ExtendedITextTest {
             PrivateKey caPrivateKey = PemFileHelper.readFirstKey(rootCertPath, PASSWORD);
 
             verification.addVerification("TestSignature", null, new TestCrlClient().addBuilderForCertIssuer(caCert, caPrivateKey),
-                    CertificateOption.SIGNING_CERTIFICATE, Level.CRL, CertificateInclusion.NO, null,null);
+                    CertificateOption.SIGNING_CERTIFICATE, Level.CRL, CertificateInclusion.NO, null,null,
+              null);
 
             verification.merge();
         }
@@ -175,7 +176,8 @@ public class LtvVerificationTest extends ExtendedITextTest {
             verificationWithWriter.merge();
             Exception exception2 = Assert.assertThrows(IllegalStateException.class,
                     () -> verificationWithWriter.addVerification(null, null, null,
-                            CertificateOption.SIGNING_CERTIFICATE, Level.CRL, CertificateInclusion.YES, null,null));
+                            CertificateOption.SIGNING_CERTIFICATE, Level.CRL, CertificateInclusion.YES, null,null,
+                      null));
             Assert.assertEquals(SignExceptionMessageConstant.VERIFICATION_ALREADY_OUTPUT, exception2.getMessage());
         }
     }
@@ -197,7 +199,8 @@ public class LtvVerificationTest extends ExtendedITextTest {
     public void exceptionWhenValidateParticularNonExistentSigNameTest() {
         Assert.assertThrows(NullPointerException.class,
                 () -> TEST_VERIFICATION.addVerification("nonExistentSigName", null, null,
-                        CertificateOption.SIGNING_CERTIFICATE, Level.OCSP_CRL, CertificateInclusion.YES, null,null));
+                        CertificateOption.SIGNING_CERTIFICATE, Level.OCSP_CRL, CertificateInclusion.YES, null,null,
+                  null));
     }
 
     @Test
@@ -577,6 +580,7 @@ public class LtvVerificationTest extends ExtendedITextTest {
             crl = new CrlClientOnline(crlUrl);
         }
         Assert.assertEquals(expectedResult,
-                TEST_VERIFICATION.addVerification(SIG_FIELD_NAME, ocsp, crl, certificateOption, level, inclusion, null,null));
+                TEST_VERIFICATION.addVerification(SIG_FIELD_NAME, ocsp, crl, certificateOption, level, inclusion, null,null,
+                  null));
     }
 }

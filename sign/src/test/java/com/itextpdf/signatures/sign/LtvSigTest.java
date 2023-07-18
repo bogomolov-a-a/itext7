@@ -98,7 +98,8 @@ public class LtvSigTest extends ExtendedITextTest {
         LtvVerification ltvVerification = new LtvVerification(document);
         ltvVerification.addVerification("Signature1", testOcspClient, testCrlClient,
                 LtvVerification.CertificateOption.SIGNING_CERTIFICATE, LtvVerification.Level.OCSP_CRL,
-                LtvVerification.CertificateInclusion.YES, null,null);
+                LtvVerification.CertificateInclusion.YES, null,null,
+          null);
         ltvVerification.merge();
         document.close();
 
@@ -187,7 +188,8 @@ public class LtvSigTest extends ExtendedITextTest {
         LtvVerification ltvVerification = new LtvVerification(document);
         ltvVerification.addVerification("timestampSig1", testOcspClient, testCrlClient,
                 LtvVerification.CertificateOption.SIGNING_CERTIFICATE, LtvVerification.Level.OCSP_CRL,
-                LtvVerification.CertificateInclusion.YES, null,null);
+                LtvVerification.CertificateInclusion.YES, null,null,
+          null);
         ltvVerification.merge();
         document.close();
 

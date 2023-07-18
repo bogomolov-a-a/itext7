@@ -56,7 +56,8 @@ public class SignatureWrappingAttackTest extends ExtendedITextTest {
 
         PdfDocument document = new PdfDocument(new PdfReader(filePath));
         SignatureUtil sigUtil = new SignatureUtil(document);
-        PdfPKCS7 pdfPKCS7 = sigUtil.readSignatureData(signatureName, null,null);
+        PdfPKCS7 pdfPKCS7 = sigUtil.readSignatureData(signatureName, null,null,
+          null);
         Assert.assertTrue(pdfPKCS7.verifySignatureIntegrityAndAuthenticity());
         Assert.assertFalse(sigUtil.signatureCoversWholeDocument(signatureName));
         document.close();

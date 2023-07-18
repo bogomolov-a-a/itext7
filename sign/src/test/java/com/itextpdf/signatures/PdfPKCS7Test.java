@@ -163,7 +163,8 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "ltvEnabledSingleSignatureTest01.pdf"));
         SignatureUtil sigUtil = new SignatureUtil(outDocument);
-        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1", null,null);
+        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1", null,null,
+          null);
 
         Assert.assertNull(pkcs7.getCRLs());
         // it's tested here that ocsp and time stamp token were found while
@@ -189,7 +190,8 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void verifyTimestampImprintSimpleSignatureTest() throws IOException, GeneralSecurityException {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "simpleSignature.pdf"));
-        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("Signature1", null,null);
+        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("Signature1", null,null,
+          null);
         Assert.assertFalse(pkcs7.verifyTimestampImprint());
     }
 
@@ -197,7 +199,8 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void verifyTimestampImprintTimeStampSignatureTest() throws IOException, GeneralSecurityException {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "timeStampSignature.pdf"));
-        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("timestampSig1", null,null);
+        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("timestampSig1", null,null,
+          null);
         Assert.assertFalse(pkcs7.verifyTimestampImprint());
     }
 
@@ -205,7 +208,8 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void verifyTimestampImprintEmbeddedTimeStampSignatureTest() throws IOException, GeneralSecurityException {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "embeddedTimeStampSignature.pdf"));
-        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("Signature1", null,null);
+        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("Signature1", null,null,
+          null);
         Assert.assertTrue(pkcs7.verifyTimestampImprint());
     }
 
@@ -213,7 +217,8 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
     public void verifyTimestampImprintCorruptedTimeStampSignatureTest() throws IOException, GeneralSecurityException {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "embeddedTimeStampCorruptedSignature.pdf"));
-        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("Signature1", null,null);
+        PdfPKCS7 pkcs7 = new SignatureUtil(outDocument).readSignatureData("Signature1", null,null,
+          null);
         Assert.assertTrue(pkcs7.verifyTimestampImprint());
     }
 
@@ -222,7 +227,8 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "singleSignatureNotEmptyCRL.pdf"));
         SignatureUtil sigUtil = new SignatureUtil(outDocument);
-        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1", null,null);
+        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1", null,null,
+          null);
         List<X509CRL> crls = pkcs7.getCRLs().stream().map(crl -> (X509CRL) crl).collect(Collectors.toList());
         Assert.assertEquals(2, crls.size());
         Assert.assertArrayEquals(crls.get(0).getEncoded(),
@@ -244,7 +250,8 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "signatureWithInvalidOcspTest.pdf"));
         SignatureUtil sigUtil = new SignatureUtil(outDocument);
-        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1", null,null);
+        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1", null,null,
+          null);
         Assert.assertFalse(pkcs7.isRevocationValid());
     }
 
@@ -253,7 +260,8 @@ public class PdfPKCS7Test extends PdfPKCS7BasicTest {
         PdfDocument outDocument = new PdfDocument(
                 new PdfReader(SOURCE_FOLDER + "signatureWithValidOcspTest.pdf"));
         SignatureUtil sigUtil = new SignatureUtil(outDocument);
-        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1", null,null);
+        PdfPKCS7 pkcs7 = sigUtil.readSignatureData("Signature1", null,null,
+          null);
         Assert.assertTrue(pkcs7.isRevocationValid());
     }
 

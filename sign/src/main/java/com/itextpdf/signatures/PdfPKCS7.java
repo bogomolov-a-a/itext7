@@ -55,6 +55,7 @@ import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.CRL;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509CRL;
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -259,10 +260,11 @@ public class PdfPKCS7 {
      * @param provider    the provider or <code>null</code> for the default provider
      */
     @SuppressWarnings("unchecked")
-    public PdfPKCS7(byte[] contentsKey, byte[] certsKey, String provider, IExternalDigest interfaceDigest, IExternalSignature interfaceSignature) {
+    public PdfPKCS7(byte[] contentsKey, byte[] certsKey, String provider, IExternalDigest interfaceDigest, IExternalSignature interfaceSignature,
+                    CertificateFactory externalCertificateFactory) {
         try {
             this.provider = provider;
-            certs = SignUtils.readAllCerts(certsKey);
+            certs = SignUtils.readAllCerts(certsKey,externalCertificateFactory);
             signCerts = certs;
             signCert = (X509Certificate) SignUtils.getFirstElement(certs);
             crls = new ArrayList<>();
@@ -289,12 +291,14 @@ public class PdfPKCS7 {
     /**
      * Use this constructor if you want to verify a signature.
      *
-     * @param contentsKey   the /Contents key
-     * @param filterSubtype the filtersubtype
-     * @param provider      the provider or <code>null</code> for the default provider
+     * @param contentsKey                the /Contents key
+     * @param filterSubtype              the filtersubtype
+     * @param provider                   the provider or <code>null</code> for the default provider
+     * @param externalCertificateFactory
      */
     @SuppressWarnings({"unchecked"})
-    public PdfPKCS7(byte[] contentsKey, PdfName filterSubtype, String provider, IExternalDigest interfaceDigest, IExternalSignature interfaceSignature) {
+    public PdfPKCS7(byte[] contentsKey, PdfName filterSubtype, String provider, IExternalDigest interfaceDigest, IExternalSignature interfaceSignature,
+                    CertificateFactory externalCertificateFactory) {
         this.filterSubtype = filterSubtype;
         isTsp = PdfName.ETSI_RFC3161.equals(filterSubtype);
         isCades = PdfName.ETSI_CAdES_DETACHED.equals(filterSubtype);
@@ -360,7 +364,8 @@ public class PdfPKCS7 {
             }
 
             // the certificates
-            certs = SignUtils.readAllCerts(contentsKey);
+            certs = SignUtils.readAllCerts(contentsKey,
+              externalCertificateFactory);
 
             // the signerInfos
             IASN1Set signerInfos = BOUNCY_CASTLE_FACTORY.createASN1Set(content.getObjectAt(next));

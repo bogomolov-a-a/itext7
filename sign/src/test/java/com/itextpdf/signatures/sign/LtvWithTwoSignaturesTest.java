@@ -120,7 +120,8 @@ public class LtvWithTwoSignaturesTest extends ExtendedITextTest {
         ltvVerification.addVerification(sigName, testOcspClient, testCrlClient,
                 LtvVerification.CertificateOption.WHOLE_CHAIN,
                 LtvVerification.Level.OCSP_CRL,
-                LtvVerification.CertificateInclusion.YES, null,null);
+                LtvVerification.CertificateInclusion.YES, null,null,
+          null);
         ltvVerification.merge();
         document.close();
     }

@@ -204,7 +204,8 @@ public class PadesSigTest extends ExtendedITextTest {
         PdfDocument outDocument = new PdfDocument(new PdfReader(filePath));
 
         SignatureUtil sigUtil = new SignatureUtil(outDocument);
-        PdfPKCS7 signatureData = sigUtil.readSignatureData(signatureName, null,null);
+        PdfPKCS7 signatureData = sigUtil.readSignatureData(signatureName, null,null,
+          null);
         Assert.assertTrue(signatureData.verifySignatureIntegrityAndAuthenticity());
 
         outDocument.close();

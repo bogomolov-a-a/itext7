@@ -74,10 +74,12 @@ public class LtvVerifierTest extends ExtendedITextTest {
             throws IOException, GeneralSecurityException, AbstractPKCSException, AbstractOperatorCreationException {
         String ltvTsFileName = sourceFolder + "ltvDoc.pdf";
 
-        LtvVerifier verifier = new LtvVerifier(new PdfDocument(new PdfReader(ltvTsFileName)), null,null);
+        LtvVerifier verifier = new LtvVerifier(new PdfDocument(new PdfReader(ltvTsFileName)), null,null,
+          null);
         verifier.setCertificateOption(LtvVerification.CertificateOption.WHOLE_CHAIN);
         verifier.setRootStore(PemFileHelper.initStore(certsSrc + "rootStore.pem", password, PROVIDER));
-        List<VerificationOK> verificationMessages = verifier.verify(null, (IExternalDigest) null,null);
+        List<VerificationOK> verificationMessages = verifier.verify(null, (IExternalDigest) null,null,
+          null);
 
         Assert.assertEquals(7, verificationMessages.size());
     }
@@ -89,10 +91,12 @@ public class LtvVerifierTest extends ExtendedITextTest {
         Security.addProvider(FACTORY.getProvider());
 
         LtvVerifier verifier =
-                new LtvVerifier(new PdfDocument(new PdfReader(ltvTsFileName)), FACTORY.getProviderName(),null,null);
+                new LtvVerifier(new PdfDocument(new PdfReader(ltvTsFileName)), FACTORY.getProviderName(),null,null,
+                  null);
         verifier.setCertificateOption(LtvVerification.CertificateOption.WHOLE_CHAIN);
         verifier.setRootStore(PemFileHelper.initStore(certsSrc + "rootStore.pem", password, PROVIDER));
-        List<VerificationOK> verificationMessages = verifier.verify(null, (IExternalDigest) null,null);
+        List<VerificationOK> verificationMessages = verifier.verify(null, (IExternalDigest) null,null,
+          null);
 
         Assert.assertEquals(7, verificationMessages.size());
     }

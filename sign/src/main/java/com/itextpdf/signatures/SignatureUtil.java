@@ -33,6 +33,7 @@ import com.itextpdf.signatures.exceptions.SignExceptionMessageConstant;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.cert.CertificateFactory;
 import java.util.*;
 
 /**
@@ -72,14 +73,17 @@ public class SignatureUtil {
      * In order to check that given signature covers the current {@link PdfDocument} please
      * use {@link #signatureCoversWholeDocument(String)} method.
      *
-     * @param signatureFieldName the signature field name
+     * @param signatureFieldName         the signature field name
      * @param externalDigest
      * @param externalSignature
+     * @param externalCertificateFactory
      * @return a {@link PdfPKCS7} instance which can be used to fetch additional info about the signature
      * and also to perform integrity check of data signed by the given signature field.
      */
-    public PdfPKCS7 readSignatureData(String signatureFieldName, IExternalDigest externalDigest, IExternalSignature externalSignature) {
-        return readSignatureData(signatureFieldName, null, externalDigest, externalSignature);
+    public PdfPKCS7 readSignatureData(String signatureFieldName, IExternalDigest externalDigest, IExternalSignature externalSignature,
+                                      CertificateFactory externalCertificateFactory) {
+        return readSignatureData(signatureFieldName, null, externalDigest, externalSignature,
+          externalCertificateFactory);
     }
 
     /**
@@ -94,14 +98,16 @@ public class SignatureUtil {
      * In order to check that /ByteRange is properly defined and given signature indeed covers the current PDF document
      * revision please use {@link #signatureCoversWholeDocument(String)} method.
      *
-     * @param signatureFieldName the signature field name
-     * @param securityProvider   the security provider or null for the default provider
+     * @param signatureFieldName         the signature field name
+     * @param securityProvider           the security provider or null for the default provider
      * @param externalDigest
      * @param externalSignature
+     * @param externalCertificateFactory
      * @return a {@link PdfPKCS7} instance which can be used to fetch additional info about the signature
      * and also to perform integrity check of data signed by the given signature field.
      */
-    public PdfPKCS7 readSignatureData(String signatureFieldName, String securityProvider, IExternalDigest externalDigest, IExternalSignature externalSignature) {
+    public PdfPKCS7 readSignatureData(String signatureFieldName, String securityProvider, IExternalDigest externalDigest, IExternalSignature externalSignature,
+                                      CertificateFactory externalCertificateFactory) {
         PdfSignature signature = getSignature(signatureFieldName);
         if (signature == null) {
             return null;
@@ -116,9 +122,11 @@ public class SignatureUtil {
                     cert = signature.getPdfObject().getAsArray(PdfName.Cert).getAsString(0);
                 }
                 pk = new PdfPKCS7(PdfEncodings.convertToBytes(contents.getValue(), null), cert.getValueBytes(),
-                        securityProvider, externalDigest, externalSignature);
+                        securityProvider, externalDigest, externalSignature,
+                  externalCertificateFactory);
             } else {
-                pk = new PdfPKCS7(PdfEncodings.convertToBytes(contents.getValue(), null), sub, securityProvider, externalDigest, externalSignature);
+                pk = new PdfPKCS7(PdfEncodings.convertToBytes(contents.getValue(), null), sub, securityProvider, externalDigest, externalSignature,
+                  externalCertificateFactory);
             }
             updateByteRange(pk, signature);
             PdfString date = signature.getDate();

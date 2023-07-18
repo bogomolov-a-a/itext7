@@ -77,7 +77,8 @@ public class PdfPKCS7BasicTest extends ExtendedITextTest {
             but a curve param mismatch doesn't factor into the algorithm support fallback logic, so
             it causes a runtime error.
             */
-            PdfPKCS7 data = u.readSignatureData("Signature", BOUNCY_CASTLE_FACTORY.getProviderName(), null,null);
+            PdfPKCS7 data = u.readSignatureData("Signature", BOUNCY_CASTLE_FACTORY.getProviderName(), null,null,
+              null);
             Assert.assertEquals(expectedSigMechanismName, data.getSignatureMechanismName());
             Assert.assertTrue(data.verifySignatureIntegrityAndAuthenticity());
         }
