@@ -69,150 +69,150 @@ import org.junit.experimental.categories.Category;
 @Category(BouncyCastleIntegrationTest.class)
 public class PdfASigningTest extends ExtendedITextTest {
 
-    private static final IBouncyCastleFactory FACTORY = BouncyCastleFactoryCreator.getFactory();
+  private static final IBouncyCastleFactory FACTORY = BouncyCastleFactoryCreator.getFactory();
 
-    public static final String sourceFolder = "./src/test/resources/com/itextpdf/signatures/sign/PdfASigningTest/";
-    public static final String destinationFolder = "./target/test/com/itextpdf/signatures/sign/PdfASigningTest/";
-    public static final String keystorePath = "./src/test/resources/com/itextpdf/signatures/certs/signCertRsa01.pem";
-    public static final char[] password = "testpassphrase".toCharArray();
-    public static final String FONT = "./src/test/resources/com/itextpdf/signatures/font/FreeSans.ttf";
+  public static final String sourceFolder = "./src/test/resources/com/itextpdf/signatures/sign/PdfASigningTest/";
+  public static final String destinationFolder = "./target/test/com/itextpdf/signatures/sign/PdfASigningTest/";
+  public static final String keystorePath = "./src/test/resources/com/itextpdf/signatures/certs/signCertRsa01.pem";
+  public static final char[] password = "testpassphrase".toCharArray();
+  public static final String FONT = "./src/test/resources/com/itextpdf/signatures/font/FreeSans.ttf";
 
-    private Certificate[] chain;
-    private PrivateKey pk;
+  private Certificate[] chain;
+  private PrivateKey pk;
 
-    @BeforeClass
-    public static void before() {
-        Security.addProvider(FACTORY.getProvider());
-        createOrClearDestinationFolder(destinationFolder);
+  @BeforeClass
+  public static void before() {
+    Security.addProvider(FACTORY.getProvider());
+    createOrClearDestinationFolder(destinationFolder);
+  }
+
+  @Before
+  public void init()
+    throws IOException, CertificateException, AbstractPKCSException, AbstractOperatorCreationException {
+    pk = PemFileHelper.readFirstKey(keystorePath, password);
+    chain = PemFileHelper.readFirstChain(keystorePath);
+  }
+
+  @Test
+  public void simpleSigningTest() throws GeneralSecurityException, IOException, InterruptedException {
+    String src = sourceFolder + "simplePdfADocument.pdf";
+    String fileName = "simpleSignature.pdf";
+    String dest = destinationFolder + fileName;
+
+    int x = 36;
+    int y = 548;
+    int w = 200;
+    int h = 100;
+    Rectangle rect = new Rectangle(x, y, w, h);
+
+    String fieldName = "Signature1";
+    sign(src, fieldName, dest, chain, pk,
+      DigestAlgorithms.SHA256, PdfSigner.CryptoStandard.CADES, "Test 1", "TestCity", rect, false, false, PdfSigner.NOT_CERTIFIED, 12f);
+
+    Assert.assertNull(new VeraPdfValidator().validate(dest)); // Android-Conversion-Skip-Line (TODO DEVSIX-7377 introduce pdf\a validation on Android)
+    Assert.assertNull(SignaturesCompareTool.compareSignatures(dest, sourceFolder + "cmp_" + fileName));
+    Assert.assertNull(new CompareTool().compareVisually(dest, sourceFolder + "cmp_" + fileName, destinationFolder,
+      "diff_", getTestMap(new Rectangle(27, 550, 195, 40))));
+  }
+
+  @Test
+  public void signingPdfA2DocumentTest() throws IOException, GeneralSecurityException {
+    String src = sourceFolder + "simplePdfA2Document.pdf";
+    String out = destinationFolder + "signedPdfA2Document.pdf";
+
+    PdfReader reader = new PdfReader(new FileInputStream(src));
+    PdfSigner signer = new PdfSigner(reader, new FileOutputStream(out), new StampingProperties());
+    signer.setFieldLockDict(new PdfSigFieldLock());
+    signer.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
+
+    IExternalSignature pks =
+      new PrivateKeySignature(pk, DigestAlgorithms.SHA256, FACTORY.getProviderName());
+    signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES);
+
+    Assert.assertNull(new VeraPdfValidator().validate(out)); // Android-Conversion-Skip-Line (TODO DEVSIX-7377 introduce pdf\a validation on Android)
+  }
+
+  @Test
+  public void failedSigningPdfA2DocumentTest() throws IOException {
+    String src = sourceFolder + "simplePdfADocument.pdf";
+    String out = destinationFolder + "signedPdfADocument2.pdf";
+
+    PdfReader reader = new PdfReader(new FileInputStream(src));
+    PdfSigner signer = new PdfSigner(reader, new FileOutputStream(out), new StampingProperties());
+    signer.setFieldLockDict(new PdfSigFieldLock());
+    signer.setCertificationLevel(PdfSigner.NOT_CERTIFIED);
+
+    int x = 36;
+    int y = 548;
+    int w = 200;
+    int h = 100;
+    Rectangle rect = new Rectangle(x, y, w, h);
+    PdfFont font = PdfFontFactory.createFont("Helvetica","WinAnsi",
+      EmbeddingStrategy.PREFER_EMBEDDED);
+
+    PdfSignatureAppearance appearance = signer.getSignatureAppearance()
+      .setReason("pdfA test")
+      .setLocation("TestCity")
+      .setLayer2Font(font)
+      .setReuseAppearance(false)
+      .setPageRect(rect);
+
+    IExternalSignature pks = new PrivateKeySignature(pk, DigestAlgorithms.SHA256, FACTORY.getProviderName());
+
+    Exception e = Assert.assertThrows(PdfAConformanceException.class, () ->
+      signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null,
+        0, PdfSigner.CryptoStandard.CADES));
+    Assert.assertEquals(MessageFormatUtil.format(PdfAConformanceException.ALL_THE_FONTS_MUST_BE_EMBEDDED_THIS_ONE_IS_NOT_0,
+      "Helvetica"), e.getMessage());
+  }
+
+  protected void sign(String src, String name, String dest,
+    Certificate[] chain, PrivateKey pk,
+    String digestAlgorithm, PdfSigner.CryptoStandard subfilter,
+    String reason, String location, Rectangle rectangleForNewField, boolean setReuseAppearance, boolean isAppendMode) throws GeneralSecurityException, IOException {
+    sign(src, name, dest, chain, pk, digestAlgorithm, subfilter, reason, location, rectangleForNewField, setReuseAppearance, isAppendMode, PdfSigner.NOT_CERTIFIED, null);
+  }
+
+  protected void sign(String src, String name, String dest,
+    Certificate[] chain, PrivateKey pk,
+    String digestAlgorithm, PdfSigner.CryptoStandard subfilter,
+    String reason, String location, Rectangle rectangleForNewField, boolean setReuseAppearance, boolean isAppendMode, int certificationLevel, Float fontSize)
+    throws GeneralSecurityException, IOException {
+
+    PdfReader reader = new PdfReader(src);
+    StampingProperties properties = new StampingProperties();
+    if (isAppendMode) {
+      properties.useAppendMode();
+    }
+    PdfSigner signer = new PdfSigner(reader, new FileOutputStream(dest), properties);
+
+    signer.setCertificationLevel(certificationLevel);
+
+    PdfFont font = PdfFontFactory.createFont(FONT, "WinAnsi", EmbeddingStrategy.PREFER_EMBEDDED);
+
+    // Creating the appearance
+    PdfSignatureAppearance appearance = signer.getSignatureAppearance()
+      .setReason(reason)
+      .setLocation(location)
+      .setLayer2Font(font)
+      .setReuseAppearance(setReuseAppearance);
+
+    if (rectangleForNewField != null) {
+      appearance.setPageRect(rectangleForNewField);
+    }
+    if (fontSize != null) {
+      appearance.setLayer2FontSize((float) fontSize);
     }
 
-    @Before
-    public void init()
-            throws IOException, CertificateException, AbstractPKCSException, AbstractOperatorCreationException {
-        pk = PemFileHelper.readFirstKey(keystorePath, password);
-        chain = PemFileHelper.readFirstChain(keystorePath);
-    }
+    signer.setFieldName(name);
+    // Creating the signature
+    IExternalSignature pks = new PrivateKeySignature(pk, digestAlgorithm, FACTORY.getProviderName());
+    signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, subfilter);
+  }
 
-    @Test
-    public void simpleSigningTest() throws GeneralSecurityException, IOException, InterruptedException {
-        String src = sourceFolder + "simplePdfADocument.pdf";
-        String fileName = "simpleSignature.pdf";
-        String dest = destinationFolder + fileName;
-
-        int x = 36;
-        int y = 548;
-        int w = 200;
-        int h = 100;
-        Rectangle rect = new Rectangle(x, y, w, h);
-
-        String fieldName = "Signature1";
-        sign(src, fieldName, dest, chain, pk,
-                DigestAlgorithms.SHA256, PdfSigner.CryptoStandard.CADES, "Test 1", "TestCity", rect, false, false, PdfSigner.NOT_CERTIFIED, 12f);
-
-        Assert.assertNull(new VeraPdfValidator().validate(dest)); // Android-Conversion-Skip-Line (TODO DEVSIX-7377 introduce pdf\a validation on Android)
-        Assert.assertNull(SignaturesCompareTool.compareSignatures(dest, sourceFolder + "cmp_" + fileName));
-        Assert.assertNull(new CompareTool().compareVisually(dest, sourceFolder + "cmp_" + fileName, destinationFolder,
-                "diff_", getTestMap(new Rectangle(27, 550, 195, 40))));
-    }
-
-    @Test
-    public void signingPdfA2DocumentTest() throws IOException, GeneralSecurityException {
-        String src = sourceFolder + "simplePdfA2Document.pdf";
-        String out = destinationFolder + "signedPdfA2Document.pdf";
-
-        PdfReader reader = new PdfReader(new FileInputStream(src));
-        PdfSigner signer = new PdfSigner(reader, new FileOutputStream(out), new StampingProperties());
-        signer.setFieldLockDict(new PdfSigFieldLock());
-        signer.setCertificationLevel(PdfSigner.CERTIFIED_NO_CHANGES_ALLOWED);
-
-        IExternalSignature pks =
-                new PrivateKeySignature(pk, DigestAlgorithms.SHA256, FACTORY.getProviderName());
-        signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES);
-
-        Assert.assertNull(new VeraPdfValidator().validate(out)); // Android-Conversion-Skip-Line (TODO DEVSIX-7377 introduce pdf\a validation on Android)
-    }
-
-    @Test
-    public void failedSigningPdfA2DocumentTest() throws IOException {
-        String src = sourceFolder + "simplePdfADocument.pdf";
-        String out = destinationFolder + "signedPdfADocument2.pdf";
-
-        PdfReader reader = new PdfReader(new FileInputStream(src));
-        PdfSigner signer = new PdfSigner(reader, new FileOutputStream(out), new StampingProperties());
-        signer.setFieldLockDict(new PdfSigFieldLock());
-        signer.setCertificationLevel(PdfSigner.NOT_CERTIFIED);
-
-        int x = 36;
-        int y = 548;
-        int w = 200;
-        int h = 100;
-        Rectangle rect = new Rectangle(x, y, w, h);
-        PdfFont font = PdfFontFactory.createFont("Helvetica","WinAnsi",
-                EmbeddingStrategy.PREFER_EMBEDDED);
-
-        PdfSignatureAppearance appearance = signer.getSignatureAppearance()
-                .setReason("pdfA test")
-                .setLocation("TestCity")
-                .setLayer2Font(font)
-                .setReuseAppearance(false)
-                .setPageRect(rect);
-
-        IExternalSignature pks = new PrivateKeySignature(pk, DigestAlgorithms.SHA256, FACTORY.getProviderName());
-
-        Exception e = Assert.assertThrows(PdfAConformanceException.class, () ->
-                signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null,
-                        0, PdfSigner.CryptoStandard.CADES));
-        Assert.assertEquals(MessageFormatUtil.format(PdfAConformanceException.ALL_THE_FONTS_MUST_BE_EMBEDDED_THIS_ONE_IS_NOT_0,
-                        "Helvetica"), e.getMessage());
-    }
-
-    protected void sign(String src, String name, String dest,
-                        Certificate[] chain, PrivateKey pk,
-                        String digestAlgorithm, PdfSigner.CryptoStandard subfilter,
-                        String reason, String location, Rectangle rectangleForNewField, boolean setReuseAppearance, boolean isAppendMode) throws GeneralSecurityException, IOException {
-        sign(src, name, dest, chain, pk, digestAlgorithm, subfilter, reason, location, rectangleForNewField, setReuseAppearance, isAppendMode, PdfSigner.NOT_CERTIFIED, null);
-    }
-
-    protected void sign(String src, String name, String dest,
-                        Certificate[] chain, PrivateKey pk,
-                        String digestAlgorithm, PdfSigner.CryptoStandard subfilter,
-                        String reason, String location, Rectangle rectangleForNewField, boolean setReuseAppearance, boolean isAppendMode, int certificationLevel, Float fontSize)
-            throws GeneralSecurityException, IOException {
-
-        PdfReader reader = new PdfReader(src);
-        StampingProperties properties = new StampingProperties();
-        if (isAppendMode) {
-            properties.useAppendMode();
-        }
-        PdfSigner signer = new PdfSigner(reader, new FileOutputStream(dest), properties);
-
-        signer.setCertificationLevel(certificationLevel);
-
-        PdfFont font = PdfFontFactory.createFont(FONT, "WinAnsi", EmbeddingStrategy.PREFER_EMBEDDED);
-
-        // Creating the appearance
-        PdfSignatureAppearance appearance = signer.getSignatureAppearance()
-                .setReason(reason)
-                .setLocation(location)
-                .setLayer2Font(font)
-                .setReuseAppearance(setReuseAppearance);
-
-        if (rectangleForNewField != null) {
-            appearance.setPageRect(rectangleForNewField);
-        }
-        if (fontSize != null) {
-            appearance.setLayer2FontSize((float) fontSize);
-        }
-
-        signer.setFieldName(name);
-        // Creating the signature
-        IExternalSignature pks = new PrivateKeySignature(pk, digestAlgorithm, FACTORY.getProviderName());
-        signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, subfilter);
-    }
-
-    private static Map<Integer, List<Rectangle>> getTestMap(Rectangle ignoredArea) {
-        Map<Integer, List<Rectangle>> result = new HashMap<Integer, List<Rectangle>>();
-        result.put(1, Collections.singletonList(ignoredArea));
-        return result;
-    }
+  private static Map<Integer, List<Rectangle>> getTestMap(Rectangle ignoredArea) {
+    Map<Integer, List<Rectangle>> result = new HashMap<Integer, List<Rectangle>>();
+    result.put(1, Collections.singletonList(ignoredArea));
+    return result;
+  }
 }
