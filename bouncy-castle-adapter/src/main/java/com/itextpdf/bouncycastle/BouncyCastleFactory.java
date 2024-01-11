@@ -556,7 +556,7 @@ public class BouncyCastleFactory implements IBouncyCastleFactory {
      */
     @Override
     public IASN1OutputStream createASN1OutputStream(OutputStream outputStream, String asn1Encoding) {
-        return new ASN1OutputStreamBC(ASN1OutputStream.create(outputStream, asn1Encoding));
+        return new ASN1OutputStreamBC(new ASN1OutputStream(outputStream));
     }
 
     /**

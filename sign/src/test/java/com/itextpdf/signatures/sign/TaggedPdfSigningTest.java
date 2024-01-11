@@ -167,10 +167,9 @@ public class TaggedPdfSigningTest extends ExtendedITextTest {
             appearance.setLayer2FontSize((float) fontSize);
         }
 
-        signer.setFieldName(name);
         // Creating the signature
         IExternalSignature pks = new PrivateKeySignature(pk, digestAlgorithm, FACTORY.getProviderName());
-        signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, subfilter);
+        signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, subfilter,name);
     }
 
     private static Map<Integer, List<Rectangle>> getTestMap(Rectangle ignoredArea) {

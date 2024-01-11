@@ -127,7 +127,7 @@ public class PdfASigningTest extends ExtendedITextTest {
 
     IExternalSignature pks =
       new PrivateKeySignature(pk, DigestAlgorithms.SHA256, FACTORY.getProviderName());
-    signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES);
+    signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES,"Signature1");
 
     Assert.assertNull(new VeraPdfValidator().validate(out)); // Android-Conversion-Skip-Line (TODO DEVSIX-7377 introduce pdf\a validation on Android)
   }
@@ -161,7 +161,7 @@ public class PdfASigningTest extends ExtendedITextTest {
 
     Exception e = Assert.assertThrows(PdfAConformanceException.class, () ->
       signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null,
-        0, PdfSigner.CryptoStandard.CADES));
+        0, PdfSigner.CryptoStandard.CADES,"Signature1"));
     Assert.assertEquals(MessageFormatUtil.format(PdfAConformanceException.ALL_THE_FONTS_MUST_BE_EMBEDDED_THIS_ONE_IS_NOT_0,
       "Helvetica"), e.getMessage());
   }
@@ -204,10 +204,9 @@ public class PdfASigningTest extends ExtendedITextTest {
       appearance.setLayer2FontSize((float) fontSize);
     }
 
-    signer.setFieldName(name);
     // Creating the signature
     IExternalSignature pks = new PrivateKeySignature(pk, digestAlgorithm, FACTORY.getProviderName());
-    signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, subfilter);
+    signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, subfilter,"Signature1");
   }
 
   private static Map<Integer, List<Rectangle>> getTestMap(Rectangle ignoredArea) {

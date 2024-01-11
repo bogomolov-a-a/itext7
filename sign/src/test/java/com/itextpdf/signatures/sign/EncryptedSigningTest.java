@@ -97,11 +97,10 @@ public class EncryptedSigningTest extends ExtendedITextTest {
         PdfSigner signer = new PdfSigner(reader, new FileOutputStream(outPdf),
                 new StampingProperties().useAppendMode());
 
-        signer.setFieldName(fieldName);
         // Creating the signature
         IExternalSignature pks = new PrivateKeySignature(pk, DigestAlgorithms.SHA256,
                 FACTORY.getProviderName());
-        signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES);
+        signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES,fieldName);
 
         //Password to open out and cmp files are the same
         ReaderProperties properties = new ReaderProperties().setPassword(ownerPass);
@@ -126,7 +125,7 @@ public class EncryptedSigningTest extends ExtendedITextTest {
             IExternalSignature pks = new PrivateKeySignature(pk, DigestAlgorithms.SHA256,
                     FACTORY.getProviderName());
             signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0,
-                    PdfSigner.CryptoStandard.CADES);
+                    PdfSigner.CryptoStandard.CADES,null);
 
             ReaderProperties properties = new ReaderProperties().setPublicKeySecurityParams(chain[0], pk,
                     FACTORY.getProviderName(), null);

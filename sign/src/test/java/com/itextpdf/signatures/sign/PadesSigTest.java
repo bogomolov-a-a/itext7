@@ -181,7 +181,7 @@ public class PadesSigTest extends ExtendedITextTest {
                 new PrivateKeySignature(signPrivateKey, DigestAlgorithms.SHA256, FACTORY.getProviderName());
 
         PdfSigner signer = new PdfSigner(new PdfReader(srcFileName), new FileOutputStream(outFileName), new StampingProperties());
-        signer.setFieldName("Signature1");
+
         signer.getSignatureAppearance()
                 .setPageRect(new Rectangle(50, 650, 200, 100))
                 .setReason("Test")
@@ -190,13 +190,13 @@ public class PadesSigTest extends ExtendedITextTest {
 
         if (sigPolicyIdentifier != null) {
             signer.signDetached(new BouncyCastleDigest(), pks, signChain, null, null, null, 0,
-                    PdfSigner.CryptoStandard.CADES, sigPolicyIdentifier);
+                    PdfSigner.CryptoStandard.CADES, sigPolicyIdentifier,"Signature1");
         } else if (sigPolicyInfo != null) {
             signer.signDetached(new BouncyCastleDigest(), pks, signChain, null, null, null, 0,
-                    PdfSigner.CryptoStandard.CADES, sigPolicyInfo);
+                    PdfSigner.CryptoStandard.CADES, sigPolicyInfo,"Signature1");
         } else {
             signer.signDetached(new BouncyCastleDigest(), pks, signChain, null, null, null, 0,
-                    PdfSigner.CryptoStandard.CADES);
+                    PdfSigner.CryptoStandard.CADES,"Signature1");
         }
     }
 

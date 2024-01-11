@@ -152,7 +152,6 @@ public class SimpleSigningTest extends ExtendedITextTest {
         Rectangle rect = new Rectangle(36, 648, 200, 100);
 
         signer.setCertificationLevel(PdfSigner.NOT_CERTIFIED);
-        signer.setFieldName("Signature1");
 
         // Creating the appearance
         createAppearance(signer, "Test 1", "TestCity", false, rect, 12f);
@@ -160,7 +159,7 @@ public class SimpleSigningTest extends ExtendedITextTest {
         // Creating the signature
         IExternalSignature pks =
                 new PrivateKeySignature(pk, DigestAlgorithms.SHA256, FACTORY.getProviderName());
-        signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES);
+        signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES,"Signature1");
 
         Assert.assertNull(new CompareTool().compareVisually(outPdf, cmpPdf, DESTINATION_FOLDER, "diff_",
                 getTestMap(rect)));
@@ -186,10 +185,9 @@ public class SimpleSigningTest extends ExtendedITextTest {
         // Creating the appearance
         createAppearance(signer, reason, location, setReuseAppearance, rectangleForNewField, fontSize);
 
-        signer.setFieldName(name);
         // Creating the signature
         IExternalSignature pks = new PrivateKeySignature(pk, digestAlgorithm, FACTORY.getProviderName());
-        signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, subfilter);
+        signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, subfilter,name);
     }
 
     private static Map<Integer, List<Rectangle>> getTestMap(Rectangle ignoredArea) {

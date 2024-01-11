@@ -93,7 +93,6 @@ public class PadesSignatureLevelTest extends ExtendedITextTest {
         PrivateKey tsaPrivateKey = PemFileHelper.readFirstKey(tsaCertFileName, password);
 
         PdfSigner signer = new PdfSigner(new PdfReader(srcFileName), new FileOutputStream(outFileName), new StampingProperties());
-        signer.setFieldName("Signature1");
         signer.getSignatureAppearance()
                 .setPageRect(new Rectangle(50, 650, 200, 100))
                 .setReason("Test")
@@ -103,7 +102,7 @@ public class PadesSignatureLevelTest extends ExtendedITextTest {
 
         TestTsaClient testTsa = new TestTsaClient(Arrays.asList(tsaChain), tsaPrivateKey);
 
-        signer.signDetached(new BouncyCastleDigest(), pks, signRsaChain, null, null, testTsa, 0, PdfSigner.CryptoStandard.CADES);
+        signer.signDetached(new BouncyCastleDigest(), pks, signRsaChain, null, null, testTsa, 0, PdfSigner.CryptoStandard.CADES,"Signature1");
 
         PadesSigTest.basicCheckSignedDoc(destinationFolder + "padesSignatureLevelTTest01.pdf", "Signature1");
 

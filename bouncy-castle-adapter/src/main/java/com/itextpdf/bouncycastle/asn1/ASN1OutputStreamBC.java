@@ -42,7 +42,7 @@ public class ASN1OutputStreamBC implements IASN1OutputStream {
      * @param stream OutputStream to create {@link ASN1OutputStream} to be wrapped
      */
     public ASN1OutputStreamBC(OutputStream stream) {
-        this.stream = ASN1OutputStream.create(stream);
+        this.stream = new ASN1OutputStream(stream);
     }
 
     /**

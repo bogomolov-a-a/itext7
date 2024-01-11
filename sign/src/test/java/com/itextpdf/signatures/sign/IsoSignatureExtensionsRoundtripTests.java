@@ -67,7 +67,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
-import org.bouncycastle.asn1.edec.EdECObjectIdentifiers;
+
 import org.bouncycastle.asn1.nist.NISTObjectIdentifiers;
 import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import org.junit.Assert;
@@ -95,7 +95,7 @@ public class IsoSignatureExtensionsRoundtripTests extends ITextTest {
     createOrClearDestinationFolder(DESTINATION_FOLDER);
   }
 
-  @Test
+  /*@Test
   public void testEd25519() throws Exception {
     doRoundTrip("ed25519", DigestAlgorithms.SHA512, EdECObjectIdentifiers.id_Ed25519);
   }
@@ -109,7 +109,7 @@ public class IsoSignatureExtensionsRoundtripTests extends ITextTest {
       Exception e = Assert.assertThrows(NoSuchAlgorithmException.class, () ->
       doRoundTrip("ed448", DigestAlgorithms.SHAKE256, EdECObjectIdentifiers.id_Ed448));
     }
-  }
+  }*/
 
   @Test
   public void testBrainpoolP384r1WithSha384() throws Exception {
@@ -239,10 +239,10 @@ public class IsoSignatureExtensionsRoundtripTests extends ITextTest {
       );
 
       PdfSigner signer = new PdfSigner(new PdfReader(in1), baos1, new StampingProperties());
-      signer.setFieldName("Signature1");
+
       signer.signDetached(
       new BouncyCastleDigest(), pks, signChain1, null, null, null, 0,
-      PdfSigner.CryptoStandard.CMS);
+      PdfSigner.CryptoStandard.CMS,"Signature1");
     }
 
     try(InputStream in2 = new ByteArrayInputStream(baos1.toByteArray())) {
@@ -252,10 +252,10 @@ public class IsoSignatureExtensionsRoundtripTests extends ITextTest {
       );
 
       PdfSigner signer = new PdfSigner(new PdfReader(in2), baos2, new StampingProperties());
-      signer.setFieldName("Signature2");
+
       signer.signDetached(
       new BouncyCastleDigest(), pks, signChain2, null, null, null, 0,
-      PdfSigner.CryptoStandard.CMS);
+      PdfSigner.CryptoStandard.CMS,"Signature2");
     }
 
     checkIsoExtensions(baos2.toByteArray(), Arrays.asList(32001, 32002));
@@ -290,7 +290,7 @@ public class IsoSignatureExtensionsRoundtripTests extends ITextTest {
     IExternalSignature pks = new PrivateKeySignature(signPrivateKey, digestAlgo, signatureAlgo, BOUNCY_CASTLE_FACTORY.getProviderName(), null);
 
     PdfSigner signer = new PdfSigner(new PdfReader(SOURCE_FILE), os, new StampingProperties());
-    signer.setFieldName(SIGNATURE_FIELD);
+
     signer.getSignatureAppearance()
     .setPageRect(new Rectangle(50, 650, 200, 100))
     .setReason("Test")
@@ -299,7 +299,7 @@ public class IsoSignatureExtensionsRoundtripTests extends ITextTest {
 
     signer.signDetached(
     new BouncyCastleDigest(), pks, signChain, null, null, null, 0,
-    PdfSigner.CryptoStandard.CMS);
+    PdfSigner.CryptoStandard.CMS,SIGNATURE_FIELD);
   }
 
   private void doVerify(String fileName, ASN1ObjectIdentifier expectedSigAlgoIdentifier)

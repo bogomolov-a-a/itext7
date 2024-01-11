@@ -478,8 +478,8 @@ public class PdfPKCS7 {
             IASN1Sequence signatureMechanismInfo = BOUNCY_CASTLE_FACTORY
                     .createASN1Sequence(signerInfo.getObjectAt(next));
             ++next;
-            signatureMechanismOid = BOUNCY_CASTLE_FACTORY.createASN1ObjectIdentifier(
-                    signatureMechanismInfo.getObjectAt(0)).getId();
+            signatureMechanismOid = determinateSigningAlgorithm(interfaceSignature,BOUNCY_CASTLE_FACTORY.createASN1ObjectIdentifier(
+                    signatureMechanismInfo.getObjectAt(0)).getId(),digestAlgorithmOid);
             if (signatureMechanismInfo.size() > 1) {
                 signatureMechanismParameters = signatureMechanismInfo.getObjectAt(1);
             }

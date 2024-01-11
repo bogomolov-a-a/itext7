@@ -136,10 +136,9 @@ public class LtvSigTest extends ExtendedITextTest {
 
         PdfSigner signer = new PdfSigner(new PdfReader(srcFileName), new FileOutputStream(ltvFileName),
                 new StampingProperties());
-        signer.setFieldName("Signature1");
 
         signer.signDetached(new BouncyCastleDigest(), pks, signChain, crlNotAvailableList, testOcspClient, testTsa, 0,
-                PdfSigner.CryptoStandard.CADES);
+                PdfSigner.CryptoStandard.CADES,"Signature1");
 
         Assert.assertNull(SignaturesCompareTool.compareSignatures(
                 ltvFileName, SOURCE_FOLDER + "cmp_ltvEnabledSingleSignatureNoCrlDataTest.pdf"));
@@ -162,9 +161,8 @@ public class LtvSigTest extends ExtendedITextTest {
 
         PdfSigner signer = new PdfSigner(new PdfReader(srcFileName), new FileOutputStream(ltvFileName),
                 new StampingProperties());
-        signer.setFieldName("Signature1");
         signer.signDetached(new BouncyCastleDigest(), pks, signChain, Collections.<ICrlClient>singletonList(testCrlClient), null,
-                testTsa, 0, PdfSigner.CryptoStandard.CADES);
+                testTsa, 0, PdfSigner.CryptoStandard.CADES,"Signature1");
 
         Assert.assertNull(SignaturesCompareTool.compareSignatures(
                 ltvFileName, SOURCE_FOLDER + "cmp_ltvEnabledSingleSignatureNoOcspDataTest.pdf"));

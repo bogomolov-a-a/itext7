@@ -187,10 +187,10 @@ public class RSASSAPSSTest extends ExtendedITextTest {
             IExternalSignature pks = new PrivateKeySignature(signPrivateKey, digestAlgo, signatureAlgo, FACTORY.getProviderName(), params);
 
             PdfSigner signer = new PdfSigner(new PdfReader(SOURCE_FILE), fos, new StampingProperties());
-            signer.setFieldName(SIGNATURE_FIELD);
+
             signer.signDetached(
                     new BouncyCastleDigest(), pks, signChain, null, null, null, 0,
-                    PdfSigner.CryptoStandard.CMS);
+                    PdfSigner.CryptoStandard.CMS,SIGNATURE_FIELD);
         }
     }
 

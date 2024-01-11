@@ -207,11 +207,10 @@ public class Pdf20SigningTest extends ExtendedITextTest {
         PdfSigner signer = new PdfSigner(reader, new FileOutputStream(dest), properties);
         signer.setCertificationLevel(certificationLevel);
 
-        signer.setFieldName(name);
         // Creating the signature
         IExternalSignature pks = new PrivateKeySignature(pk, digestAlgorithm, FACTORY.getProviderName());
         signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null,
-                0, subfilter);
+                0, subfilter,name);
     }
 
     protected void sign(String src, String name, String dest,
@@ -243,10 +242,9 @@ public class Pdf20SigningTest extends ExtendedITextTest {
             appearance.setLayer2FontSize((float) fontSize);
         }
 
-        signer.setFieldName(name);
         // Creating the signature
         IExternalSignature pks = new PrivateKeySignature(pk, digestAlgorithm, FACTORY.getProviderName());
-        signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, subfilter);
+        signer.signDetached(new BouncyCastleDigest(), pks, chain, null, null, null, 0, subfilter,name);
     }
 
     protected void sign(String src, String name, String dest,

@@ -70,7 +70,7 @@ import org.junit.experimental.categories.Category;
 public class SignDeferredTest extends ExtendedITextTest {
 
     private static final IBouncyCastleFactory FACTORY = BouncyCastleFactoryCreator.getFactory();
-    
+
     private static final String certsSrc = "./src/test/resources/com/itextpdf/signatures/certs/";
     private static final String sourceFolder = "./src/test/resources/com/itextpdf/signatures/sign/SignDeferredTest/";
     private static final String destinationFolder = "./target/test/com/itextpdf/signatures/sign/SignDeferredTest/";
@@ -101,9 +101,8 @@ public class SignDeferredTest extends ExtendedITextTest {
                 .setLayer2Text("Signature field which signing is deferred.")
                 .setPageRect(new Rectangle(36, 600, 200, 100))
                 .setPageNumber(1);
-        signer.setFieldName(sigFieldName);
         IExternalSignatureContainer external = new ExternalBlankSignatureContainer(filter, subFilter);
-        signer.signExternalContainer(external, estimatedSize);
+        signer.signExternalContainer(external, estimatedSize,sigFieldName);
 
         // validate result
         validateTemplateForSignedDeferredResult(output, sigFieldName, filter, subFilter, estimatedSize);
@@ -124,13 +123,12 @@ public class SignDeferredTest extends ExtendedITextTest {
                 .setLayer2Text("Signature field which signing is deferred.")
                 .setPageRect(new Rectangle(36, 600, 200, 100))
                 .setPageNumber(1);
-        signer.setFieldName(sigFieldName);
         IExternalSignatureContainer external = new ExternalBlankSignatureContainer(filter, subFilter);
 
         // This size is definitely not enough
         int estimatedSize = -1;
         Exception e = Assert.assertThrows(IOException.class,
-                () -> signer.signExternalContainer(external, estimatedSize));
+                () -> signer.signExternalContainer(external, estimatedSize,sigFieldName));
         Assert.assertEquals(SignExceptionMessageConstant.NOT_ENOUGH_SPACE, e.getMessage());
     }
 
@@ -149,14 +147,13 @@ public class SignDeferredTest extends ExtendedITextTest {
                 .setLayer2Text("Signature field which signing is deferred.")
                 .setPageRect(new Rectangle(36, 600, 200, 100))
                 .setPageNumber(1);
-        signer.setFieldName(sigFieldName);
         IExternalSignatureContainer external = new ExternalBlankSignatureContainer(filter, subFilter);
 
         // This size is definitely not enough, however, the size check will pass.
         // The test will fail lately on an invalid key
         int estimatedSize = 0;
         Exception e = Assert.assertThrows(IllegalArgumentException.class,
-                () -> signer.signExternalContainer(external, estimatedSize));
+                () -> signer.signExternalContainer(external, estimatedSize,sigFieldName));
         Assert.assertEquals(SignExceptionMessageConstant.TOO_BIG_KEY, e.getMessage());
     }
 
@@ -208,9 +205,8 @@ public class SignDeferredTest extends ExtendedITextTest {
                 .setLayer2Text("Signature field which signing is deferred.")
                 .setPageRect(new Rectangle(36, 600, 200, 100))
                 .setPageNumber(1);
-        signer.setFieldName(sigFieldName);
         DigestCalcBlankSigner external = new DigestCalcBlankSigner(filter, subFilter);
-        signer.signExternalContainer(external, estimatedSize);
+        signer.signExternalContainer(external, estimatedSize,sigFieldName);
         byte[] docBytesHash = external.getDocBytesHash();
         byte[] preSignedBytes = baos.toByteArray();
 
